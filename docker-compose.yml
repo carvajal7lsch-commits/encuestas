@@ -3,20 +3,20 @@ version: '3.8'
 services:
   db:
     image: postgres:15
-    container_name: modulocrud_db
+    container_name: encuestas_vps_db
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
       POSTGRES_DB: modulocrud
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - encuestas_pgdata:/var/lib/postgresql/data
     ports:
       - "5433:5432"
 
   backend:
     build: ./backend
-    container_name: modulocrud_backend
+    container_name: encuestas_vps_backend
     restart: always
     depends_on:
       - db
@@ -36,12 +36,12 @@ services:
       context: ./frontend
       args:
         - VITE_API_URL=/api
-    container_name: modulocrud_frontend
+    container_name: encuestas_vps_frontend
     restart: always
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "8080:80" # Cambiado a 8080 por si el 80 ya está ocupado por otro frontend en Docker
 
 volumes:
-  pgdata:
+  encuestas_pgdata:
