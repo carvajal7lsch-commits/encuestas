@@ -12,7 +12,7 @@ services:
     volumes:
       - encuestas_pgdata:/var/lib/postgresql/data
     ports:
-      - "5489:5432" # Puerto BD cambiado a 5489
+      - "8897:5432" # Puerto BD cambiado a 8897 (Libre)
 
   backend:
     build: ./backend
@@ -29,7 +29,7 @@ services:
       DB_PORT: 5432
       JWT_SECRET: super_secret_jwt_key
     ports:
-      - "3089:3000" # Puerto API cambiado a 3089
+      - "8896:3000" # Puerto API cambiado a 8896 (Libre)
 
   frontend:
     build:
@@ -41,7 +41,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "8089:80" # Puerto Web cambiado a 8089
+      - "8895:80" # Puerto Web cambiado a 8895 (Libre)
 
 volumes:
   encuestas_pgdata:
