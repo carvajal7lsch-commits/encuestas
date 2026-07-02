@@ -1,0 +1,26 @@
+/* Reutiliza estilos de UsuariosPage.css (table-container, data-table, form-group) */
+@import './UsuariosPage.css';
+
+.date-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: #94a3b8;
+}
+
+.version-badge {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+}

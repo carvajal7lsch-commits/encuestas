@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <!-- Fondo Azul Corporativo de Marca EncuestasOffline -->
+  <rect width="108" height="108" rx="24" fill="#2563EB" />
+  
+  <!-- Cuerpos/Lienzo de la Tabla Portapapeles -->
+  <path fill="#FFFFFF" d="M34,26 C31.79,26 30,27.79 30,30 L30,78 C30,80.21 31.79,82 34,82 L74,82 C76.21,82 78,80.21 78,78 L78,30 C78,27.79 76.21,26 74,26 L34,26 Z" />
+  
+  <!-- Clip de Sujeción Superior -->
+  <path fill="#1E40AF" d="M44,22 C44,20.34 45.34,19 47,19 L61,19 C62.66,19 64,20.34 64,22 L64,28 L44,28 Z" />
+  
+  <!-- Orificio del Clip -->
+  <circle cx="54" cy="24" r="2.5" fill="#FFFFFF" />
+      
+  <!-- Líneas de Formulario y Checkmarks -->
+  <rect x="46" y="36" width="24" height="3" rx="1.5" fill="#2563EB" />
+  <rect x="46" y="46" width="24" height="3" rx="1.5" fill="#2563EB" />
+  <rect x="46" y="56" width="24" height="3" rx="1.5" fill="#2563EB" />
+  <rect x="46" y="66" width="18" height="3" rx="1.5" fill="#2563EB" />
+
+  <!-- Checkmark Verde de Encuesta Guardada -->
+  <path fill="#059669" d="M38.5,45.5 L41.5,48.5 L45.7,44.6 C46,44.3 46,43.7 45.7,43.4 C45.4,43.1 44.8,43.1 44.5,43.5 L41.5,47.5 L38.5,44.5 C38.2,44.2 37.6,44.2 37.3,44.5 C37,44.8 37,45.4 37.3,45.7 Z" />
+  <path fill="#059669" d="M38.5,55.5 L41.5,58.5 L45.7,54.6 C46,54.3 46,53.7 45.7,53.4 C45.4,53.1 44.8,53.1 44.5,53.5 L41.5,57.5 L38.5,54.5 C38.2,54.2 37.6,54.2 37.3,54.5 C37,54.8 37,55.4 37.3,55.7 Z" />
+</svg>
