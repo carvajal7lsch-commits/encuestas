@@ -10,9 +10,9 @@ export class AuthService {
     this.usuarioRepository = new UsuarioRepository();
   }
 
-  async login(identificador: string, passwordPlana: string): Promise<string | null> {
+  async login(identificador: string, passwordPlana: string) {
     const usuario = await this.usuarioRepository.obtenerPorCredencial(identificador);
-    
+
     if (!usuario) {
       return null;
     }
@@ -31,6 +31,13 @@ export class AuthService {
     const secret = process.env.JWT_SECRET || 'fallback_secret';
     const token = jwt.sign(payload, secret, { expiresIn: '8h' });
 
-    return token;
+    return {
+      token,
+      usuario: {
+        id_usuario: usuario.id_usuario,
+        numero_documento: usuario.numero_documento,
+        rol: usuario.rol
+      }
+    };
   }
 }

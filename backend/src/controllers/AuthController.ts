@@ -15,29 +15,32 @@ export class AuthController {
   }
 
   login = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const parseResult = loginSchema.safeParse(req.body);
-      
-      if (!parseResult.success) {
-        res.status(400).json({
-          error: 'Datos inválidos',
-          detalles: parseResult.error.format()
-        });
-        return;
-      }
+  try {
+    const parseResult = loginSchema.safeParse(req.body);
 
-      const { identificador, password } = parseResult.data;
-      const token = await this.authService.login(identificador, password);
-
-      if (!token) {
-        res.status(401).json({ error: 'Credenciales incorrectas o usuario inactivo' });
-        return;
-      }
-
-      res.status(200).json({ token });
-    } catch (error) {
-      console.error('Error en AuthController.login:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+    if (!parseResult.success) {
+      res.status(400).json({
+        error: 'Datos inválidos',
+        detalles: parseResult.error.format()
+      });
+      return;
     }
-  };
+
+    const { identificador, password } = parseResult.data;
+    const resultado = await this.authService.login(identificador, password);
+
+    if (!resultado) {
+      res.status(401).json({ error: 'Credenciales incorrectas o usuario inactivo' });
+      return;
+    }
+
+    res.status(200).json({
+      token: resultado.token,
+      user: resultado.usuario
+    });
+  } catch (error) {
+    console.error('Error en AuthController.login:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
 }
