@@ -36,7 +36,7 @@ export class AuthController {
 
     res.status(200).json({
       token: resultado.token,
-      user: resultado.usuario
+      usuario: resultado.usuario
     });
   } catch (error) {
     console.error('Error en AuthController.login:', error);
