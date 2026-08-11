@@ -53,4 +53,39 @@ npm run dev              # inicia Vite server en http://localhost:5173
 2. Hacer un "Sync Project with Gradle Files".
 3. Compilar y ejecutar en un emulador o dispositivo físico (API 26+ recomendada).
 
+## 🧪 Pruebas Unitarias y de Integración
+
+El proyecto cuenta con suites de pruebas automatizadas tanto en el frontend como en el backend:
+
+### Backend (Jest + ts-jest)
+```bash
+cd backend
+npm run test           # Ejecuta la suite de pruebas unitarias
+npm run test:coverage  # Ejecuta las pruebas con reporte de cobertura de código
+```
+
+### Frontend (Vitest + React Testing Library)
+```bash
+cd frontend
+npm run test           # Ejecuta la suite de pruebas del frontend
+npm run test:coverage  # Ejecuta las pruebas con reporte de cobertura de código
+```
+
+## ⚙️ Integración Continua (CI)
+
+Se ha configurado un flujo de integración continua utilizando **GitHub Actions** en `.github/workflows/ci.yml`. En cada `push` o `pull_request` a las ramas principales (`main`, `master`, `develop`), se ejecutan automáticamente las siguientes tareas:
+1. Instalación limpia de dependencias.
+2. Validación de formato y análisis estático (Linter / compiler).
+3. Ejecución de la suite completa de pruebas unitarias.
+4. Compilación del proyecto (`build`) para asegurar la ausencia de fallos sintácticos o de tipado.
+
+## 🔒 Mejoras de Seguridad y Refactorización
+- **Restricción de CORS:** Configuración robusta en el backend ([backend/src/index.ts](backend/src/index.ts)) limitando el acceso a orígenes autorizados configurables desde variables de entorno.
+- **Refactorización de la Landing Page:** Estructuración modular en el frontend dividiendo código y estilos masivos en componentes desacoplados (`LandingHeader`, `LandingHero`, `LandingFeatures`, `SmartMergeInfo`, `ApkModal`, `LandingFooter`).
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia **MIT**; consulta el archivo [LICENSE](LICENSE) para ver más detalles sobre su distribución y uso.
+
+
 

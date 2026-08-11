@@ -10,7 +10,39 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000'
+];
+
+if (process.env.ALLOWED_ORIGINS) {
+  process.env.ALLOWED_ORIGINS.split(',').forEach(origin => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
+console.log('[CORS] Orígenes permitidos:', allowedOrigins);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origen (como apps móviles o curl)
+    if (!origin) {
+      return callback(null, true);
+    }
+    // Permitir dinámicamente cualquier origen local en desarrollo
+    const esLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
+    if (esLocal || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false); // Rechazar sin arrojar error a Express
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // Rutas públicas
@@ -33,6 +65,10 @@ app.get('/api/protected', authMiddleware, (req: Request, res: Response) => {
   });
 });
 
-app.listen(Number(port), '0.0.0.0', () => {
-  console.log(`[server]: Server is running at http://0.0.0.0:${port}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(Number(port), '0.0.0.0', () => {
+    console.log(`[server]: Server is running at http://0.0.0.0:${port}`);
+  });
+}
+
+export default app;
