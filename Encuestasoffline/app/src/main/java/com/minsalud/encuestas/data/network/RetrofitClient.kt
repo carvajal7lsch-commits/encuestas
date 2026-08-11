@@ -26,7 +26,7 @@ object RetrofitClient {
         get() = if (isEmulator) {
             "http://10.0.2.2:3000/api/"
         } else {
-            "http://2.25.154.18:3000/api/"
+            "https://encuestas.secarvajal.com/api/"
         }
 
     fun getApiService(tokenManager: TokenManager): ApiService {
