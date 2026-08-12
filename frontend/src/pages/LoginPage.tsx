@@ -152,6 +152,15 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {/* Demo credentials box */}
+          <div className="demo-credentials-box">
+            <span className="demo-credentials-title">🔑 Acceso de Prueba (Demostración)</span>
+            <div className="demo-credentials-row">
+              <span className="demo-credential-item"><strong>Usuario:</strong> <code>admin</code></span>
+              <span className="demo-credential-item"><strong>Contraseña:</strong> <code>123456</code></span>
+            </div>
+          </div>
+
           {/* Footer Back Link */}
           <div className="login-footer-back">
             <button className="btn-back-landing" onClick={() => navigate('/')}>

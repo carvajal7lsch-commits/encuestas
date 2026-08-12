@@ -1,5 +1,8 @@
 package com.minsalud.encuestas.ui.form
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -49,19 +52,27 @@ fun FormScreen(
     var vacunas by remember { mutableStateOf("") }
     var enfermedad by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
-
-    var attemptedSubmit by remember { mutableStateOf(false) }
-    var showSuccessModal by remember { mutableStateOf(false) }
-    var savedIdEncuesta by remember { mutableStateOf("") }
+    var hasHistorial by remember { mutableStateOf(false) }
+    var cargoDatos by remember { mutableStateOf(false) }
 
     var existingPersona by remember { mutableStateOf<PersonaEntity?>(null) }
     var latestHistorial by remember { mutableStateOf<HistorialEntity?>(null) }
     var showHistoryDetails by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    
+    val isOnline = remember(context) {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        val network = connectivityManager?.activeNetwork
+        val capabilities = connectivityManager?.getNetworkCapabilities(network)
+        capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+    }
 
-    // Cargar datos previos si el ciudadano ya existe en la BD local
+    var savedIdEncuesta by remember { mutableStateOf("") }
+    var showSuccessModal by remember { mutableStateOf(false) }
+    var attemptedSubmit by remember { mutableStateOf(false) }
+
     LaunchedEffect(documento) {
         try {
             val db = AppDatabase.getDatabase(context)
@@ -75,7 +86,14 @@ fun FormScreen(
             val historial = repo.getLatestHistorial(documento)
             if (historial != null) {
                 latestHistorial = historial
+                hasHistorial = true
+                val gson = Gson()
+                val map = gson.fromJson(historial.datosRecolectados, Map::class.java)
+                vacunas = (map["vacunas"] as? String) ?: ""
+                enfermedad = (map["enfermedad"] as? String) ?: ""
+                observaciones = (map["observaciones"] as? String) ?: ""
             }
+            cargoDatos = true
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -98,27 +116,32 @@ fun FormScreen(
             },
             title = {
                 Text(
-                    text = "¡Encuesta Guardada en Dispositivo!",
+                    text = if (isOnline) "¡Encuesta Guardada y Sincronizando!" else "¡Encuesta Guardada en Dispositivo!",
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
                 )
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Los datos se han guardado localmente de forma segura en la base de datos cifrada.")
+                    Text(
+                        if (isOnline)
+                            "Los datos se guardaron localmente de forma segura y se están subiendo al servidor en este momento."
+                        else
+                            "Los datos se han guardado localmente de forma segura en la base de datos cifrada (Offline)."
+                    )
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     Text("• Ciudadano: $nombres $apellidos", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                     Text("• Documento: $documento", style = MaterialTheme.typography.bodySmall)
                     Text("• ID Encuesta: ${savedIdEncuesta.take(8)}...", style = MaterialTheme.typography.bodySmall)
                     Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
+                        color = if (isOnline) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                     ) {
                         Text(
-                            text = "En cola de sincronización automática",
+                            text = if (isOnline) "✓ Subiendo al servidor en segundo plano..." else "☁ Guardado localmente (se sincronizará al tener red)",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = if (isOnline) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(8.dp)
                         )
                     }
