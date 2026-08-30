@@ -1,8 +1,12 @@
 /* ===== Hero ===== */
 .hero-section {
   position: relative;
-  padding-block: clamp(44px, 6vw, 78px) clamp(48px, 6vw, 76px);
   z-index: 1;
+  min-height: calc(100dvh - var(--l-header-h));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: clamp(14px, 2.5vh, 32px);
 }
 
 .hero-grid {
@@ -20,21 +24,20 @@
 }
 
 .hero-title {
-  font-size: clamp(35px, 5.4vw, 60px);
+  font-size: clamp(38px, 5.4vh, 60px);
   font-weight: 700;
   line-height: 1.06;
   letter-spacing: -0.042em;
   color: #ffffff;
-  margin-top: 22px;
   text-wrap: balance;
 }
 
 .hero-description {
   max-width: 540px;
-  font-size: clamp(15.5px, 1.7vw, 17.5px);
-  line-height: 1.66;
+  font-size: clamp(15px, 1.7vw, 17.5px);
+  line-height: 1.6;
   color: var(--l-text-soft);
-  margin-top: 20px;
+  margin-top: clamp(12px, 2vh, 20px);
 }
 
 .hero-description strong {
@@ -46,7 +49,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 30px;
+  margin-top: clamp(18px, 2.6vh, 30px);
 }
 
 .hero-trust {
@@ -55,7 +58,7 @@
   gap: 8px 22px;
   list-style: none;
   padding: 0;
-  margin-top: 26px;
+  margin-top: clamp(16px, 2.4vh, 26px);
 }
 
 .hero-trust li {
@@ -89,7 +92,10 @@
 
 .device-frame {
   position: relative;
-  width: min(310px, 74vw);
+  /* La altura manda: un telefono es ~2x mas alto que ancho, asi que fijar
+     el ancho por vw dejaba la altura sin tope y desbordaba el viewport. */
+  height: clamp(360px, 70vh, 580px);
+  width: auto;
   aspect-ratio: 9 / 18.6;
   padding: 9px;
   border-radius: 42px;
@@ -425,6 +431,11 @@
 
   .hero-copy { align-items: center; }
   .hero-description { margin-inline: auto; }
+
+  /* Apilado: el telefono ya no comparte fila con el texto, asi que aqui
+     el ancho vuelve a mandar (relativo al viewport, no a la altura). */
+  .device-frame { height: auto; width: clamp(220px, 68vw, 300px); }
+
   .hero-cta-group { justify-content: center; }
   .hero-trust { justify-content: center; }
   .hero-stack { justify-content: center; }

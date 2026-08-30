@@ -37,6 +37,13 @@
   --l-section-py: clamp(72px, 9vw, 120px);
   --l-gutter: clamp(20px, 5vw, 32px);
   --l-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Altura real del header sticky, usada para que el hero encaje en un solo viewport */
+  --l-header-h: 68px;
+}
+
+@media (max-width: 900px) {
+  .landing-container { --l-header-h: 65px; }
 }
 
 /* ---------- Layout ---------- */

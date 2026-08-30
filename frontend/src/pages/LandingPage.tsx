@@ -25,6 +25,19 @@ const LandingPage: React.FC = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  // La landing es la única vista oscura del sitio: el fondo del documento y
+  // la barra de scroll nativa deben oscurecerse solo mientras está montada,
+  // para no afectar el tema claro del dashboard.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('is-dark-landing');
+    root.style.colorScheme = 'dark';
+    return () => {
+      root.classList.remove('is-dark-landing');
+      root.style.colorScheme = '';
+    };
+  }, []);
+
   const openApkModal = () => setShowApkModal(true);
 
   return (

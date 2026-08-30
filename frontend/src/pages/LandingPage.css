@@ -1,3 +1,26 @@
+/* ===== Documento oscuro mientras la landing está montada ===== */
+html.is-dark-landing,
+html.is-dark-landing body {
+  background-color: var(--l-bg, #05080f);
+}
+
+html.is-dark-landing::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html.is-dark-landing::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+}
+
+html.is-dark-landing::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+html.is-dark-landing {
+  scrollbar-color: rgba(255, 255, 255, 0.22) rgba(255, 255, 255, 0.03);
+}
+
 /* ===== Landing: contenedor y fondo ===== */
 .landing-container {
   position: relative;
