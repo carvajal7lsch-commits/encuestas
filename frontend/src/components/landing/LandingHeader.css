@@ -1,104 +1,238 @@
-/* Landing Header styles */
+/* ===== Header de la landing ===== */
 .landing-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 14px 24px;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background-color 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease;
+}
+
+.landing-header.is-scrolled {
+  background: rgba(5, 8, 15, 0.82);
+  backdrop-filter: blur(18px) saturate(150%);
+  border-bottom-color: var(--l-border);
+}
+
+/* Barra de progreso de lectura */
+.landing-progress {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--l-grad-brand);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.1s linear;
+  pointer-events: none;
 }
 
 .landing-nav-content {
-  max-width: 1200px;
-  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
+  padding-block: 14px;
 }
 
+/* ---- Marca ---- */
 .landing-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   cursor: pointer;
+  border-radius: 12px;
+}
+
+.landing-brand:focus-visible {
+  outline: 2px solid var(--l-cyan);
+  outline-offset: 4px;
 }
 
 .brand-icon {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  padding: 9px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-  transition: transform 0.3s ease;
+  color: #ffffff;
+  background: linear-gradient(140deg, #4d8dff 0%, #1d4ed8 100%);
+  box-shadow: 0 8px 20px -8px rgba(77, 141, 255, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .landing-brand:hover .brand-icon {
-  transform: rotate(6deg) scale(1.05);
+  transform: rotate(-7deg) scale(1.06);
+}
+
+.brand-text-box {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
 }
 
 .brand-title {
-  font-size: 20px;
-  font-weight: 800;
-  color: #ffffff;
-  display: block;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: 17.5px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--l-text);
 }
 
 .brand-title-alt {
-  color: #38bdf8;
+  background: var(--l-grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .brand-badge {
-  font-size: 11px;
-  color: #94a3b8;
-  font-weight: 500;
+  font-family: var(--l-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--l-text-mute);
+  margin-top: 2px;
 }
 
+/* ---- Navegacion de escritorio ---- */
 .landing-nav-links {
   display: flex;
-  gap: 28px;
+  align-items: center;
+  gap: 4px;
 }
 
 .landing-nav-links a {
+  position: relative;
   text-decoration: none;
-  color: #cbd5e1;
+  color: var(--l-text-soft);
   font-weight: 500;
   font-size: 14px;
-  transition: all 0.2s ease;
+  padding: 8px 12px;
+  border-radius: 9px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.landing-nav-links a::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 3px;
+  height: 1.5px;
+  background: var(--l-grad-brand);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .landing-nav-links a:hover {
-  color: #38bdf8;
+  color: var(--l-text);
+  background: var(--l-surface);
 }
 
+.landing-nav-links a:hover::after {
+  transform: scaleX(1);
+}
+
+/* ---- Acciones ---- */
 .landing-header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .btn-admin-login {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 9px 16px;
-  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: inherit;
   font-size: 13.5px;
   font-weight: 600;
+  color: var(--l-text);
+  background: var(--l-surface-hi);
+  border: 1px solid var(--l-border);
+  padding: 9px 15px;
+  border-radius: 11px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-  transition: all 0.25s ease;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease,
+    background-color 0.22s ease;
 }
 
 .btn-admin-login:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+  transform: translateY(-1px);
+  background: rgba(77, 141, 255, 0.16);
+  border-color: rgba(77, 141, 255, 0.45);
+}
+
+.btn-admin-login:focus-visible,
+.btn-nav-toggle:focus-visible {
+  outline: 2px solid var(--l-cyan);
+  outline-offset: 3px;
+}
+
+.btn-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: var(--l-text);
+  background: var(--l-surface-hi);
+  border: 1px solid var(--l-border);
+  border-radius: 11px;
+  cursor: pointer;
+}
+
+/* ---- Menu movil ---- */
+.landing-mobile-menu {
+  display: none;
+  overflow: hidden;
+  max-height: 0;
+  border-top: 1px solid transparent;
+  background: rgba(5, 8, 15, 0.96);
+  backdrop-filter: blur(18px);
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+.landing-mobile-menu.is-open {
+  max-height: 340px;
+  border-top-color: var(--l-border);
+}
+
+.landing-mobile-menu nav {
+  display: flex;
+  flex-direction: column;
+  padding: 8px var(--l-gutter) 16px;
+}
+
+.landing-mobile-menu a {
+  text-decoration: none;
+  color: var(--l-text-soft);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 13px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.landing-mobile-menu a:last-child {
+  border-bottom: none;
+}
+
+.landing-mobile-menu a:active {
+  color: var(--l-blue-soft);
+}
+
+@media (max-width: 900px) {
+  .landing-nav-links { display: none; }
+  .btn-nav-toggle { display: inline-flex; }
+  .landing-mobile-menu { display: block; }
+}
+
+@media (max-width: 480px) {
+  .brand-badge { display: none; }
+  .brand-title { font-size: 16px; }
+  .brand-icon { width: 34px; height: 34px; border-radius: 11px; }
+  .btn-admin-login { padding: 8px 12px; font-size: 12.5px; }
 }

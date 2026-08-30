@@ -1,79 +1,102 @@
-/* Landing Features Styles */
-.section-container {
-  max-width: 1100px;
-  margin: 48px auto;
-  padding: 0 24px;
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 36px;
-}
-
-.section-header h2 {
-  font-size: 28px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.section-header p {
-  color: #64748b;
-  font-size: 15px;
-  margin-top: 6px;
-}
-
+/* ===== Caracteristicas (bento) ===== */
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
 }
 
 .feature-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 26px 22px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
   display: flex;
-  flex-direction: column;
+  gap: 18px;
+  padding: 26px 24px;
+  border-radius: var(--l-radius-lg);
+  background: var(--l-surface);
+  border: 1px solid var(--l-border);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.feature-card--wide { grid-column: span 2; }
+
+/* Brillo sutil al pasar el cursor */
+.feature-card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: radial-gradient(420px circle at 20% 0%, rgba(77, 141, 255, 0.14), transparent 62%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
 }
 
 .feature-card:hover {
   transform: translateY(-4px);
-  border-color: #bfdbfe;
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.1);
+  border-color: var(--l-border-hi);
+  background: var(--l-surface-hi);
 }
 
+.feature-card:hover::after { opacity: 1; }
+
 .feature-icon-box {
-  width: 48px;
-  height: 48px;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
   border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
   transition: transform 0.3s ease;
 }
 
-.feature-card:hover .feature-icon-box {
-  transform: scale(1.06);
-}
+.feature-card:hover .feature-icon-box { transform: scale(1.06); }
 
-.icon-emerald { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
-.icon-purple { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
-.icon-blue { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
-.icon-amber { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.tone-emerald { color: var(--l-emerald-soft); background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.26); }
+.tone-violet { color: var(--l-violet); background: rgba(167, 139, 250, 0.12); border: 1px solid rgba(167, 139, 250, 0.26); }
+.tone-blue { color: var(--l-blue-soft); background: rgba(77, 141, 255, 0.12); border: 1px solid rgba(77, 141, 255, 0.26); }
+.tone-amber { color: var(--l-amber); background: rgba(245, 165, 36, 0.12); border: 1px solid rgba(245, 165, 36, 0.26); }
+
+.feature-card-text { display: flex; flex-direction: column; gap: 8px; }
 
 .feature-card h3 {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 8px;
+  letter-spacing: -0.025em;
+  color: var(--l-text);
 }
 
 .feature-card p {
-  font-size: 13.5px;
-  color: #475569;
-  line-height: 1.55;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--l-text-soft);
+}
+
+.feature-bullets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  list-style: none;
+  padding: 0;
+  margin-top: 6px;
+}
+
+.feature-bullets li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--l-text-mute);
+}
+
+.feature-bullets svg { color: var(--l-emerald); flex-shrink: 0; }
+
+@media (max-width: 900px) {
+  .features-grid { grid-template-columns: 1fr; gap: 14px; }
+  .feature-card--wide { grid-column: auto; }
+  .feature-card { padding: 20px 18px; gap: 14px; }
+  .feature-icon-box { width: 40px; height: 40px; border-radius: 12px; }
+  .feature-card h3 { font-size: 16.5px; }
+  .feature-card p { font-size: 14px; }
 }

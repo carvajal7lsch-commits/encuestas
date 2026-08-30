@@ -16,7 +16,7 @@ Ver `/antigravity_project/docs/PROJECT_CONTEXT.md` para el diseño arquitectóni
 ## Estructura del repositorio
 
 ```
-/android                    → app Android (Kotlin)
+/Encuestasoffline           → app Android (Kotlin)
 /backend                    → API REST (Node.js + TypeScript)
 /frontend                   → Dashboard de Administración (React + Vite)
 /antigravity_project/docs   → documentación de diseño (brief, base de datos, API)
@@ -81,7 +81,7 @@ Se ha configurado un flujo de integración continua utilizando **GitHub Actions*
 
 ## 🔒 Mejoras de Seguridad y Refactorización
 - **Restricción de CORS:** Configuración robusta en el backend ([backend/src/index.ts](backend/src/index.ts)) limitando el acceso a orígenes autorizados configurables desde variables de entorno.
-- **Refactorización de la Landing Page:** Estructuración modular en el frontend dividiendo código y estilos masivos en componentes desacoplados (`LandingHeader`, `LandingHero`, `LandingFeatures`, `SmartMergeInfo`, `ApkModal`, `LandingFooter`).
+- **Rediseño de la Landing Page:** Reconstrucción completa en tema oscuro sobre un sistema de diseño propio (`landing-theme.css`), con revelado progresivo por `IntersectionObserver`, navegación móvil, mockup de la app renderizado en CSS y diagrama del Smart Merge. Secciones desacopladas: `LandingHeader`, `LandingHero`, `LandingSteps`, `LandingFeatures`, `SmartMergeInfo`, `LandingArchitecture`, `LandingFaq`, `LandingCta`, `LandingFooter` y `ApkModal`.
 
 ## 📄 Licencia
 

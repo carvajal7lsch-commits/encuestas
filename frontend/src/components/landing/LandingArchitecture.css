@@ -1,0 +1,104 @@
+/* ===== Arquitectura ===== */
+.arch-flow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.arch-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 22px 20px;
+  border-radius: var(--l-radius);
+  background: var(--l-surface);
+  border: 1px solid var(--l-border);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+.arch-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--l-border-hi);
+}
+
+/* Conector entre capas */
+.arch-card:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -16px;
+  width: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(77, 141, 255, 0.5), rgba(77, 141, 255, 0.12));
+}
+
+.arch-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.arch-card.tone-emerald .arch-icon { color: var(--l-emerald-soft); background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.26); }
+.arch-card.tone-blue .arch-icon { color: var(--l-blue-soft); background: rgba(77, 141, 255, 0.12); border: 1px solid rgba(77, 141, 255, 0.26); }
+.arch-card.tone-violet .arch-icon { color: var(--l-violet); background: rgba(167, 139, 250, 0.12); border: 1px solid rgba(167, 139, 250, 0.26); }
+.arch-card.tone-amber .arch-icon { color: var(--l-amber); background: rgba(245, 165, 36, 0.12); border: 1px solid rgba(245, 165, 36, 0.26); }
+
+.arch-label {
+  font-family: var(--l-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--l-text-mute);
+}
+
+.arch-card h3 {
+  font-size: 16.5px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--l-text);
+}
+
+.arch-card ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin-top: 4px;
+}
+
+.arch-card li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--l-text-soft);
+}
+
+.arch-card li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+}
+
+@media (max-width: 1024px) {
+  .arch-flow { grid-template-columns: repeat(2, 1fr); }
+  .arch-card:nth-child(2)::after { display: none; }
+}
+
+@media (max-width: 640px) {
+  .arch-flow { grid-template-columns: 1fr; }
+  .arch-card::after { display: none !important; }
+  .arch-card { padding: 18px 16px; }
+}

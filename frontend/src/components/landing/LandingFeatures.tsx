@@ -1,62 +1,93 @@
 import React from 'react';
-import { Smartphone, Zap, ShieldCheck, LayoutDashboard } from 'lucide-react';
+import {
+  Smartphone,
+  Zap,
+  ShieldCheck,
+  LayoutDashboard,
+  Sparkles,
+  Check,
+} from 'lucide-react';
+import { revealDelay } from '../../hooks/useScrollReveal';
 import './LandingFeatures.css';
+
+const FEATURES = [
+  {
+    icon: Smartphone,
+    tone: 'emerald',
+    wide: true,
+    title: 'App Android offline-first',
+    text: 'Kotlin y Jetpack Compose sobre una base de datos local cifrada. El encuestador crea, edita y valida encuestas completas con el modo avión activado.',
+    bullets: ['Validación en el dispositivo', 'Base local cifrada', 'Sin pantallas de error por red'],
+  },
+  {
+    icon: Zap,
+    tone: 'violet',
+    wide: false,
+    title: 'Smart Merge Engine',
+    text: 'Fusión campo por campo con Strategy Pattern: dos encuestadores pueden tocar al mismo ciudadano sin que nadie pierda su aporte.',
+    bullets: [],
+  },
+  {
+    icon: ShieldCheck,
+    tone: 'blue',
+    wide: false,
+    title: 'Historial inmutable',
+    text: 'Los triggers de PostgreSQL escriben un histórico append-only. Nada se borra: cada cambio queda con autor, fecha y valor anterior.',
+    bullets: [],
+  },
+  {
+    icon: LayoutDashboard,
+    tone: 'amber',
+    wide: true,
+    title: 'Panel web de administración',
+    text: 'Resuelve conflictos pendientes, supervisa el avance de cada encuestador y exporta el consolidado sin salir del navegador.',
+    bullets: ['Bandeja de conflictos', 'Gestión de usuarios', 'Reportes exportables'],
+  },
+];
 
 const LandingFeatures: React.FC = () => {
   return (
-    <section id="caracteristicas" className="section-container">
-      <div className="section-header">
-        <h2>Pilares del Sistema</h2>
-        <p className="hide-on-mobile">Arquitectura robusta diseñada para encuestadores en territorio rural</p>
-      </div>
-
-      <div className="features-grid">
-        <div className="feature-card">
-          <div className="feature-icon-box icon-emerald">
-            <Smartphone size={22} />
-          </div>
-          <div className="feature-card-text">
-            <h3>App Offline-First</h3>
-            <p>
-              Kotlin, Compose y Room. <span className="hide-on-mobile">Captura sin señal y encola el envío con WorkManager.</span>
-            </p>
-          </div>
+    <section id="caracteristicas" className="l-section features-section">
+      <div className="l-container">
+        <div className="l-section-head l-section-head--center l-reveal">
+          <span className="l-eyebrow">
+            <Sparkles size={13} /> Características
+          </span>
+          <h2>Los cuatro pilares del sistema</h2>
+          <p>
+            Arquitectura pensada para el territorio rural: primero el dispositivo, después la red y
+            siempre con trazabilidad.
+          </p>
         </div>
 
-        <div className="feature-card">
-          <div className="feature-icon-box icon-purple">
-            <Zap size={22} />
-          </div>
-          <div className="feature-card-text">
-            <h3>Smart Merge Engine</h3>
-            <p>
-              Fusión campo por campo. <span className="hide-on-mobile">Evita sobrescribir datos si dos personas editan al mismo ciudadano.</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="feature-card">
-          <div className="feature-icon-box icon-blue">
-            <ShieldCheck size={22} />
-          </div>
-          <div className="feature-card-text">
-            <h3>Seguridad Inmutable</h3>
-            <p>
-              Historial append-only en BD <span className="hide-on-mobile">gestionado por triggers para auditoría transparente.</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="feature-card">
-          <div className="feature-icon-box icon-amber">
-            <LayoutDashboard size={22} />
-          </div>
-          <div className="feature-card-text">
-            <h3>Dashboard Web</h3>
-            <p>
-              Panel para resolver conflictos, <span className="hide-on-mobile">monitorear encuestadores y exportar consolidados.</span>
-            </p>
-          </div>
+        <div className="features-grid">
+          {FEATURES.map((f, i) => {
+            const Icon = f.icon;
+            return (
+              <article
+                key={f.title}
+                className={`feature-card l-reveal${f.wide ? ' feature-card--wide' : ''}`}
+                style={revealDelay(i * 90)}
+              >
+                <span className={`feature-icon-box tone-${f.tone}`}>
+                  <Icon size={21} />
+                </span>
+                <div className="feature-card-text">
+                  <h3>{f.title}</h3>
+                  <p>{f.text}</p>
+                  {f.bullets.length > 0 && (
+                    <ul className="feature-bullets">
+                      {f.bullets.map((b) => (
+                        <li key={b}>
+                          <Check size={13} /> {b}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

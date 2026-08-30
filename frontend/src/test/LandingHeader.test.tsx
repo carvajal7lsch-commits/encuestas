@@ -1,25 +1,42 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import LandingHeader from '../components/landing/LandingHeader';
 import { describe, it, expect } from 'vitest';
 
+const renderHeader = () =>
+  render(
+    <MemoryRouter>
+      <LandingHeader />
+    </MemoryRouter>
+  );
+
 describe('LandingHeader', () => {
   it('renders landing page brand name and links', () => {
-    render(
-      <MemoryRouter>
-        <LandingHeader />
-      </MemoryRouter>
-    );
+    renderHeader();
 
-    // Verify brand title is rendered
+    // Nombre de marca
     expect(screen.getByText('Encuestas')).toBeInTheDocument();
     expect(screen.getByText('Offline')).toBeInTheDocument();
 
-    // Verify navigation links
-    expect(screen.getByText('Características')).toBeInTheDocument();
-    expect(screen.getByText('Smart Merge')).toBeInTheDocument();
+    // Enlaces de navegación (presentes en el nav de escritorio y en el menú móvil)
+    expect(screen.getAllByText('Características').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Smart Merge').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Cómo funciona').length).toBeGreaterThan(0);
 
-    // Verify admin access button
-    expect(screen.getByRole('button')).toHaveTextContent(/Admin/);
+    // Botón de acceso administrador
+    expect(screen.getByRole('button', { name: /admin/i })).toBeInTheDocument();
+  });
+
+  it('toggles the mobile menu', () => {
+    renderHeader();
+
+    const toggle = screen.getByRole('button', { name: /abrir menú/i });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: /cerrar menú/i })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
   });
 });

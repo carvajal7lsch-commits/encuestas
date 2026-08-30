@@ -1,0 +1,100 @@
+/* ===== Como funciona ===== */
+.steps-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Linea conectora entre pasos (solo escritorio) */
+.steps-grid::before {
+  content: '';
+  position: absolute;
+  top: 52px;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(77, 141, 255, 0.05), rgba(77, 141, 255, 0.45), rgba(43, 215, 238, 0.05));
+  z-index: 0;
+}
+
+.step-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 26px 24px 24px;
+  border-radius: var(--l-radius-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid var(--l-border);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.step-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(77, 141, 255, 0.42);
+  box-shadow: 0 26px 48px -28px rgba(77, 141, 255, 0.75);
+}
+
+.step-number {
+  font-family: var(--l-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--l-blue-soft);
+  background: rgba(77, 141, 255, 0.12);
+  border: 1px solid rgba(77, 141, 255, 0.26);
+  border-radius: 8px;
+  padding: 4px 9px;
+}
+
+.step-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  color: var(--l-cyan);
+  background: rgba(43, 215, 238, 0.1);
+  border: 1px solid rgba(43, 215, 238, 0.24);
+  transition: transform 0.3s ease;
+}
+
+.step-card:hover .step-icon { transform: scale(1.07) rotate(-4deg); }
+
+.step-card h3 {
+  font-size: 18.5px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--l-text);
+}
+
+.step-card p {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--l-text-soft);
+}
+
+.step-meta {
+  margin-top: auto;
+  padding-top: 6px;
+  font-family: var(--l-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--l-text-mute);
+}
+
+@media (max-width: 900px) {
+  .steps-grid { grid-template-columns: 1fr; gap: 16px; }
+  .steps-grid::before { display: none; }
+  .step-card { padding: 22px 20px; }
+  .step-card h3 { font-size: 17px; }
+  .step-card p { font-size: 14px; }
+}
