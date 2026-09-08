@@ -66,6 +66,56 @@ function Escribir($mensaje, $color = 'Cyan') {
     Write-Host "  $mensaje" -ForegroundColor $color
 }
 
+<#
+    Ejecuta un programa externo y devuelve su codigo de salida.
+
+    Windows PowerShell 5.1 convierte cada linea del stderr de un ejecutable en
+    un ErrorRecord; con $ErrorActionPreference = 'Stop' eso aborta el script
+    aunque el programa haya terminado bien. Y varias herramientas usan stderr
+    para cosas normales: gh reporta ahi el progreso de subida y gradle sus
+    advertencias. Por eso se baja la preferencia solo mientras corre el
+    programa y el exito se decide por el codigo de salida, no por el stderr.
+#>
+function Invocar {
+    param(
+        [Parameter(Mandatory)][string]$Programa,
+        [string[]]$Argumentos = @(),
+        [switch]$Silencioso
+    )
+
+    $previo = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        if ($Silencioso) {
+            & $Programa @Argumentos 2>&1 | Out-Null
+        } else {
+            # El "$_" convierte los ErrorRecord del stderr en texto normal,
+            # para que la salida no se pinte como si todo hubiera fallado.
+            & $Programa @Argumentos 2>&1 | ForEach-Object { "$_" }
+        }
+        return $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previo
+    }
+}
+
+# Igual que Invocar, pero devuelve la salida en vez de imprimirla.
+function InvocarCapturando {
+    param(
+        [Parameter(Mandatory)][string]$Programa,
+        [string[]]$Argumentos = @()
+    )
+
+    $previo = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $salida = & $Programa @Argumentos 2>$null
+        return ($salida | Out-String).Trim()
+    } finally {
+        $ErrorActionPreference = $previo
+    }
+}
+
 Write-Host "`n== Publicacion de APK - EncuestasOffline ==`n" -ForegroundColor White
 
 # --- 0. Requisitos -----------------------------------------------------------
@@ -80,14 +130,13 @@ if ($Publicar) {
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
         throw 'Falta GitHub CLI (gh). Instalalo desde https://cli.github.com para poder publicar Releases.'
     }
-    gh auth status *> $null
-    if ($LASTEXITCODE -ne 0) {
+    if ((Invocar -Programa 'gh' -Argumentos @('auth', 'status') -Silencioso) -ne 0) {
         throw 'GitHub CLI no esta autenticado. Ejecuta "gh auth login" una vez y vuelve a intentar.'
     }
 }
 
 # Slug del repositorio, leido del remoto para no quemarlo en el script.
-$remoto = (git -C $raiz remote get-url origin).Trim()
+$remoto = InvocarCapturando -Programa 'git' -Argumentos @('-C', $raiz, 'remote', 'get-url', 'origin')
 if ($remoto -notmatch 'github\.com[:/](?<slug>[^/]+/[^/\.]+)') {
     throw "No se pudo deducir el repositorio de GitHub desde el remoto: $remoto"
 }
@@ -129,8 +178,7 @@ $tag = "v$versionName"
 
 # El tag no puede existir ya: seria una version distinta con el mismo nombre.
 if ($Publicar) {
-    gh release view $tag --repo $slug *> $null
-    if ($LASTEXITCODE -eq 0) {
+    if ((Invocar -Programa 'gh' -Argumentos @('release', 'view', $tag, '--repo', $slug) -Silencioso) -eq 0) {
         throw "El release $tag ya existe en $slug. Usa -Bump o -Version para publicar una version nueva."
     }
 }
@@ -140,8 +188,8 @@ Escribir 'Compilando APK de release (puede tardar unos minutos)...'
 
 Push-Location $dirAndroid
 try {
-    & .\gradlew.bat assembleRelease --console=plain -q
-    if ($LASTEXITCODE -ne 0) { throw "La compilacion de Gradle fallo (codigo $LASTEXITCODE)." }
+    $codigo = Invocar -Programa '.\gradlew.bat' -Argumentos @('assembleRelease', '--console=plain', '-q')
+    if ($codigo -ne 0) { throw "La compilacion de Gradle fallo (codigo $codigo)." }
 } finally {
     Pop-Location
 }
@@ -192,25 +240,33 @@ $argsRelease = @(
 )
 if ($Borrador) { $argsRelease += '--draft' }
 
-& gh @argsRelease
-if ($LASTEXITCODE -ne 0) { throw 'No se pudo crear el GitHub Release.' }
+if ((Invocar -Programa 'gh' -Argumentos $argsRelease) -ne 0) {
+    throw 'No se pudo crear el GitHub Release.'
+}
 
 $urlApk = "https://github.com/$slug/releases/download/$tag/$nombreAsset"
 Escribir 'Release publicado' 'Green'
 
 # --- 4. Manifiesto que consulta la app --------------------------------------
-& python $generador $versionCode $versionName $apkParaSubir $urlApk
-if ($LASTEXITCODE -ne 0) { throw 'No se pudo generar el manifiesto.' }
+$argsManifiesto = @($generador, $versionCode, $versionName, $apkParaSubir, $urlApk)
+if ((Invocar -Programa 'python' -Argumentos $argsManifiesto) -ne 0) {
+    throw 'No se pudo generar el manifiesto.'
+}
 
 # --- 5. Push del manifiesto (unos cientos de bytes) --------------------------
 Escribir 'Subiendo el manifiesto al repositorio...'
 Push-Location $raiz
 try {
-    git add $manifiesto $gradleFile
-    git commit -m "chore(apk): publicar version $versionName ($versionCode)"
-    if ($LASTEXITCODE -ne 0) { throw 'git commit fallo.' }
-    git push
-    if ($LASTEXITCODE -ne 0) { throw 'git push fallo.' }
+    if ((Invocar -Programa 'git' -Argumentos @('add', $manifiesto, $gradleFile)) -ne 0) {
+        throw 'git add fallo.'
+    }
+    $mensaje = "chore(apk): publicar version $versionName ($versionCode)"
+    if ((Invocar -Programa 'git' -Argumentos @('commit', '-m', $mensaje)) -ne 0) {
+        throw 'git commit fallo.'
+    }
+    if ((Invocar -Programa 'git' -Argumentos @('push')) -ne 0) {
+        throw 'git push fallo.'
+    }
     Escribir 'Publicado. El VPS redesplegara el frontend.' 'Green'
 } finally {
     Pop-Location
