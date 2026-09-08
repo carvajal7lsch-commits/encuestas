@@ -10,6 +10,12 @@ export const syncEncuesta = async (req: Request, res: Response): Promise<void> =
         const { id_encuesta, numero_documento, datos_recolectados } = req.body;
         const version_anterior_id = req.body.version_anterior_id || null;
         const fecha_encuesta = req.body.fecha_encuesta || null;
+
+        // La app manda la identidad del encuestado; las versiones antiguas no lo
+        // hacían, así que puede llegar vacía y en ese caso no se pisa lo que haya.
+        const nombres = typeof req.body.nombres === 'string' ? req.body.nombres.trim() : '';
+        const apellidos = typeof req.body.apellidos === 'string' ? req.body.apellidos.trim() : '';
+        const tieneIdentidad = nombres.length > 0 || apellidos.length > 0;
         // El JWT nos dejó el id del usuario que originó el request
         const id_usuario = (req as any).user.id_usuario;
 
@@ -27,7 +33,29 @@ export const syncEncuesta = async (req: Request, res: Response): Promise<void> =
         if (checkPersona.rows.length === 0) {
             await client.query(
                 'INSERT INTO personas (numero_documento, tipo_documento, nombres, apellidos) VALUES ($1, $2, $3, $4)',
-                [numero_documento, 'CC', 'Desconocido', '(Sincronizado)']
+                [
+                    numero_documento,
+                    'CC',
+                    nombres || 'Desconocido',
+                    apellidos || '(Sincronizado)'
+                ]
+            );
+        } else if (tieneIdentidad) {
+            // Se refresca la identidad con la última captura de campo y se marca
+            // updated_at, que es la columna que el panel muestra como
+            // "Última sincronización".
+            await client.query(
+                `UPDATE personas
+                 SET nombres = COALESCE(NULLIF($2, ''), nombres),
+                     apellidos = COALESCE(NULLIF($3, ''), apellidos),
+                     updated_at = NOW()
+                 WHERE numero_documento = $1`,
+                [numero_documento, nombres, apellidos]
+            );
+        } else {
+            await client.query(
+                'UPDATE personas SET updated_at = NOW() WHERE numero_documento = $1',
+                [numero_documento]
             );
         }
 

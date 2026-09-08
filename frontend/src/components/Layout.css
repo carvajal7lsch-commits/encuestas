@@ -81,6 +81,8 @@
 }
 
 .btn-download-apk {
+  /* Es un <a> real que descarga el APK servido por el sitio. */
+  text-decoration: none;
   display: flex;
   align-items: center;
   justify-content: center;

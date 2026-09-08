@@ -11,6 +11,9 @@ interface HistorialDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHistorial(historial: HistorialEntity): Long
 
+    @Query("UPDATE historial_encuestas SET fechaSincronizacion = :fecha WHERE idHistorial = :idHistorial")
+    suspend fun marcarSincronizado(idHistorial: String, fecha: Long): Int
+
     @Query("SELECT * FROM historial_encuestas WHERE numeroDocumentoPersona = :documento ORDER BY fechaEncuesta DESC")
     suspend fun getHistorialByPersona(documento: String): List<HistorialEntity>
 }

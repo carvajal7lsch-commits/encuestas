@@ -16,6 +16,13 @@ interface PersonaDao {
     @Update
     suspend fun updatePersona(persona: PersonaEntity): Int
 
+    /**
+     * El chip "Local" / "Sincronizado" de la lista se apoya en esta columna.
+     * El SyncWorker la actualiza cuando la encuesta ya viajó al servidor.
+     */
+    @Query("UPDATE personas SET syncStatus = :estado WHERE numeroDocumento = :documento")
+    suspend fun actualizarSyncStatus(documento: String, estado: String): Int
+
     @Query("SELECT * FROM personas WHERE numeroDocumento = :documento")
     suspend fun getPersona(documento: String): PersonaEntity?
 

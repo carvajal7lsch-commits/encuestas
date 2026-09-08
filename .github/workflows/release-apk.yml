@@ -1,0 +1,123 @@
+name: Publicar APK
+
+# Compila, firma y publica la APK sin abrir Android Studio.
+# Se dispara a mano desde la pestaña Actions de GitHub (botón "Run workflow"),
+# así que se puede lanzar incluso desde el celular.
+#
+# Requiere estos secretos del repositorio (Settings > Secrets > Actions):
+#   KEYSTORE_BASE64    -> encuestas-release.jks codificado en base64
+#   KEYSTORE_PASSWORD  -> storePassword de keystore.properties
+#   KEY_ALIAS          -> "encuestas"
+#   KEY_PASSWORD       -> keyPassword de keystore.properties
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'versionName a publicar (ej. 1.2.0). Vacío = solo sube el último dígito.'
+        required: false
+        default: ''
+      notas:
+        description: 'Novedades para el aviso de actualización, separadas por " | ".'
+        required: false
+        default: ''
+
+jobs:
+  build-apk:
+    name: Compilar, firmar y publicar
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+        with:
+          # Token con permiso de escritura para poder commitear la APK publicada.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cache de Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('Encuestasoffline/**/*.gradle*', 'Encuestasoffline/gradle/libs.versions.toml') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Restaurar keystore de firma
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > Encuestasoffline/encuestas-release.jks
+          test -s Encuestasoffline/encuestas-release.jks
+
+      - name: Subir versionCode y versionName
+        id: version
+        run: |
+          GRADLE=Encuestasoffline/app/build.gradle.kts
+
+          CODE_ACTUAL=$(grep -oP 'versionCode\s*=\s*\K\d+' "$GRADLE")
+          NAME_ACTUAL=$(grep -oP 'versionName\s*=\s*"\K[^"]+' "$GRADLE")
+          CODE_NUEVO=$((CODE_ACTUAL + 1))
+
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            NAME_NUEVO="${{ github.event.inputs.version }}"
+          else
+            NAME_NUEVO=$(echo "$NAME_ACTUAL" | awk -F. -v OFS=. '{$NF=$NF+1; print}')
+          fi
+
+          sed -i "s/versionCode = $CODE_ACTUAL/versionCode = $CODE_NUEVO/" "$GRADLE"
+          sed -i "s/versionName = \"$NAME_ACTUAL\"/versionName = \"$NAME_NUEVO\"/" "$GRADLE"
+
+          echo "code=$CODE_NUEVO" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME_NUEVO" >> "$GITHUB_OUTPUT"
+          echo "Publicando $NAME_NUEVO ($CODE_NUEVO)"
+
+      - name: Compilar APK de release
+        working-directory: Encuestasoffline
+        env:
+          KEYSTORE_FILE: encuestas-release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --console=plain
+
+      - name: Publicar APK y manifiesto en el frontend
+        env:
+          NOTAS: ${{ github.event.inputs.notas }}
+        run: |
+          set -e
+          # El build está redirigido fuera del proyecto (ver app/build.gradle.kts).
+          APK=$(find "$HOME/.gradle_build_encuestas/app/outputs/apk/release" -name '*.apk' | head -n1)
+          test -n "$APK" || { echo "No se generó ningún APK"; exit 1; }
+          case "$APK" in *unsigned*) echo "El APK salió sin firmar"; exit 1;; esac
+
+          cp "$APK" frontend/public/EncuestasOffline.apk
+          python3 scripts/escribir-manifiesto.py "${{ steps.version.outputs.code }}" "${{ steps.version.outputs.name }}" "$NOTAS"
+
+      - name: Commit y push de la publicación
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/EncuestasOffline.apk \
+                  frontend/public/app-version.json \
+                  Encuestasoffline/app/build.gradle.kts
+          git commit -m "chore(apk): publicar version ${{ steps.version.outputs.name }} (${{ steps.version.outputs.code }})"
+          git push
+
+      - name: Adjuntar APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: EncuestasOffline-${{ steps.version.outputs.name }}
+          path: frontend/public/EncuestasOffline.apk
+          retention-days: 30

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import LandingPage from './pages/LandingPage'
+import DashboardPage from './pages/DashboardPage'
 import ConflictosPage from './pages/ConflictosPage'
 import ReportesPage from './pages/ReportesPage'
 import PersonasPage from './pages/PersonasPage'
@@ -25,6 +26,7 @@ function App() {
       
       {/* Dashboard Administrativo Protegido */}
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/personas" element={<PersonasPage />} />
         <Route path="/conflictos" element={<ConflictosPage />} />
         <Route path="/reportes" element={<ReportesPage />} />

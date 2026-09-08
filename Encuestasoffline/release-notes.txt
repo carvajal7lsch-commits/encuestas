@@ -1,0 +1,3 @@
+Los registros ya no se quedan marcados como "Local" cuando sí subieron al servidor.
+La app ahora te avisa sola cuando hay una versión nueva.
+Sincronización más estable con redes intermitentes.

@@ -5,6 +5,7 @@ import com.minsalud.encuestas.util.TokenManager
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
     /**
@@ -32,6 +33,11 @@ object RetrofitClient {
     fun getApiService(tokenManager: TokenManager): ApiService {
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(tokenManager))
+            // Sin timeouts explícitos, una red débil (típica en zona rural) deja la
+            // petición colgada y el SyncWorker atascado sin reintentar nunca.
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
 
         return Retrofit.Builder()

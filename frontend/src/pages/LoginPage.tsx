@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ClipboardList, 
-  Eye, 
-  EyeOff, 
-  ShieldCheck, 
-  ArrowLeft
+import {
+  ClipboardList,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  ArrowLeft,
+  KeyRound,
+  WifiOff,
+  GitMerge
 } from 'lucide-react';
 import { api } from '../services/api';
 import './LoginPage.css';
+
+/** Administrador de prueba creado por el seed del backend (scripts/seedUsers.ts). */
+const DEMO_USUARIO = 'admin';
+const DEMO_PASSWORD = '123456';
 
 export default function LoginPage() {
   const [documento, setDocumento] = useState('');
@@ -27,7 +34,7 @@ export default function LoginPage() {
       const res = await api.login(documento, password);
       localStorage.setItem('token', res.token);
       localStorage.setItem('user', JSON.stringify(res.usuario));
-      navigate('/personas');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Credenciales incorrectas o usuario inactivo');
     } finally {
@@ -41,25 +48,39 @@ export default function LoginPage() {
       <div className="login-visual-side">
         <div className="visual-pattern-grid">
           <div className="pattern-tile tile-1">
-            <div className="tile-icon-box">
-              <ClipboardList size={42} color="#ffffff" />
+            <span className="tile-icon-box">
+              <ClipboardList size={30} />
+            </span>
+            <div className="tile-content">
+              <span className="tile-badge">Captura en campo</span>
+              <p>Encuestas completas aunque no haya una sola barra de señal</p>
             </div>
           </div>
           <div className="pattern-tile tile-2">
+            <span className="tile-icon-box">
+              <WifiOff size={30} />
+            </span>
             <div className="tile-content">
               <span className="tile-badge">100% Offline</span>
-              <p>Captura de datos en zonas rurales sin internet</p>
+              <p>Los datos se guardan cifrados en el dispositivo</p>
             </div>
           </div>
           <div className="pattern-tile tile-3">
-            <div className="tile-icon-box">
-              <ShieldCheck size={42} color="#2563eb" />
+            <span className="tile-icon-box">
+              <GitMerge size={30} />
+            </span>
+            <div className="tile-content">
+              <span className="tile-badge">Smart Merge</span>
+              <p>Fusión campo por campo, sin sobrescribir el trabajo de nadie</p>
             </div>
           </div>
           <div className="pattern-tile tile-4">
+            <span className="tile-icon-box">
+              <ShieldCheck size={30} />
+            </span>
             <div className="tile-content">
-              <span className="tile-badge-alt">Smart Merge</span>
-              <p>Fusión atómica sin pérdida de información</p>
+              <span className="tile-badge">Auditoría</span>
+              <p>Historial inmutable de cada versión sincronizada</p>
             </div>
           </div>
         </div>
@@ -152,13 +173,27 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo credentials box */}
+          {/* Credenciales de demostración */}
           <div className="demo-credentials-box">
-            <span className="demo-credentials-title">🔑 Acceso de Prueba (Demostración)</span>
+            <span className="demo-credentials-title">
+              <KeyRound size={14} />
+              Acceso de prueba
+            </span>
             <div className="demo-credentials-row">
               <span className="demo-credential-item"><strong>Usuario:</strong> <code>admin</code></span>
               <span className="demo-credential-item"><strong>Contraseña:</strong> <code>123456</code></span>
             </div>
+            <button
+              type="button"
+              className="demo-credentials-fill"
+              onClick={() => {
+                setDocumento(DEMO_USUARIO);
+                setPassword(DEMO_PASSWORD);
+                setError('');
+              }}
+            >
+              Usar estas credenciales
+            </button>
           </div>
 
           {/* Footer Back Link */}

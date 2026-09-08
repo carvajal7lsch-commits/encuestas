@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { 
     getDashboardStats, getConflictLogs, downloadCsvReport,
-    getPersonas, getUsuarios, createUsuario, toggleUsuario
+    getPersonas, getUsuarios, createUsuario, toggleUsuario, getHistorialPersona
 } from '../controllers/admin.controller';
 import { authMiddleware } from '../middlewares/authMiddleware';
 
@@ -15,6 +15,7 @@ router.get('/conflictos', getConflictLogs);
 router.get('/reporte.csv', downloadCsvReport);
 
 router.get('/personas', getPersonas);
+router.get('/personas/:documento/historial', getHistorialPersona);
 router.get('/usuarios', getUsuarios);
 router.post('/usuarios', createUsuario);
 router.put('/usuarios/:id/toggle', toggleUsuario);

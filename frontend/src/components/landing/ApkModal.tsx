@@ -1,27 +1,33 @@
-import React, { useEffect, useRef } from 'react';
-import { Smartphone, X, Download, ShieldCheck, HardDrive, Cpu } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Smartphone, X, Download, ShieldCheck, HardDrive, Cpu, RefreshCw } from 'lucide-react';
 import './ApkModal.css';
 
 interface ApkModalProps {
   onClose: () => void;
 }
 
-const APK_FILE = 'EncuestasOffline-v1.0.apk';
+/** Nombre estable: no lleva la versión, así el enlace nunca queda obsoleto. */
+const APK_FILE = 'EncuestasOffline.apk';
 
-const SPECS = [
-  { icon: HardDrive, label: 'Archivo', value: APK_FILE },
-  { icon: Cpu, label: 'Compatibilidad', value: 'Android 8.0+ (API 26)' },
-  { icon: ShieldCheck, label: 'Seguridad', value: 'Base local cifrada (SQLCipher)' },
-];
+/** Manifiesto que publica scripts/publicar-apk.ps1 junto al APK. */
+const VERSION_URL = '/app-version.json';
+
+interface VersionPublicada {
+  versionName: string;
+  tamanoMb?: number;
+  notas?: string[];
+}
 
 const STEPS = [
   'Descarga el archivo .apk en el dispositivo.',
   'Autoriza la instalación desde orígenes desconocidos si Android lo solicita.',
   'Abre el archivo descargado e instala la aplicación.',
+  'A partir de aquí la app te avisa sola cuando haya una versión nueva.',
 ];
 
 const ApkModal: React.FC<ApkModalProps> = ({ onClose }) => {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [version, setVersion] = useState<VersionPublicada | null>(null);
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -36,6 +42,33 @@ const ApkModal: React.FC<ApkModalProps> = ({ onClose }) => {
       document.body.style.overflow = previousOverflow;
     };
   }, [onClose]);
+
+  // La versión se lee del manifiesto en vez de estar escrita a mano, para que no
+  // se desactualice cada vez que se publica una compilación nueva.
+  useEffect(() => {
+    let vigente = true;
+    fetch(VERSION_URL)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((datos) => {
+        if (vigente && datos) setVersion(datos);
+      })
+      .catch(() => {
+        /* Sin manifiesto se muestran los datos genéricos. */
+      });
+    return () => {
+      vigente = false;
+    };
+  }, []);
+
+  const etiquetaVersion = version ? `Versión ${version.versionName}` : 'Última versión';
+  const etiquetaTamano = version?.tamanoMb ? ` · ${version.tamanoMb} MB` : '';
+
+  const specs = [
+    { icon: HardDrive, label: 'Archivo', value: APK_FILE },
+    { icon: Cpu, label: 'Compatibilidad', value: 'Android 8.0+ (API 26)' },
+    { icon: RefreshCw, label: 'Actualizaciones', value: 'Automáticas desde la app' },
+    { icon: ShieldCheck, label: 'Seguridad', value: 'Base local cifrada (SQLCipher)' },
+  ];
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -53,7 +86,7 @@ const ApkModal: React.FC<ApkModalProps> = ({ onClose }) => {
             </span>
             <div>
               <h3 id="apk-modal-title">Descargar la app móvil</h3>
-              <span className="modal-subtitle">Versión 1.0 · 32 MB</span>
+              <span className="modal-subtitle">{etiquetaVersion}{etiquetaTamano}</span>
             </div>
           </div>
           <button className="modal-close" onClick={onClose} ref={closeRef} aria-label="Cerrar">
@@ -68,7 +101,7 @@ const ApkModal: React.FC<ApkModalProps> = ({ onClose }) => {
           </p>
 
           <div className="apk-info-box">
-            {SPECS.map((spec) => {
+            {specs.map((spec) => {
               const Icon = spec.icon;
               return (
                 <div className="info-row" key={spec.label}>
@@ -97,7 +130,7 @@ const ApkModal: React.FC<ApkModalProps> = ({ onClose }) => {
             onClick={onClose}
           >
             <Download size={18} />
-            <span>Descargar APK (v1.0)</span>
+            <span>Descargar APK{version ? ` (v${version.versionName})` : ''}</span>
           </a>
         </div>
       </div>

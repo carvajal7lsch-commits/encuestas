@@ -1,10 +1,12 @@
 package com.minsalud.encuestas.data.repository
 
 import androidx.room.withTransaction
+import com.minsalud.encuestas.MinsaludApplication
 import com.minsalud.encuestas.data.local.AppDatabase
 import com.minsalud.encuestas.data.local.entity.ColaSyncEntity
 import com.minsalud.encuestas.data.local.entity.HistorialEntity
 import com.minsalud.encuestas.data.local.entity.PersonaEntity
+import com.minsalud.encuestas.worker.SyncScheduler
 import kotlinx.coroutines.flow.Flow
 
 class EncuestasRepositoryImpl(
@@ -27,10 +29,10 @@ class EncuestasRepositoryImpl(
         database.withTransaction {
             // 1. Guardar la versión local de la persona
             personaDao.insertPersona(persona)
-            
+
             // 2. Guardar el log inmutable
             historialDao.insertHistorial(historial)
-            
+
             // 3. Poner en la bandeja de salida para que WorkManager lo suba
             val tareaSincronizacion = ColaSyncEntity(
                 accion = "UPSERT",
@@ -38,19 +40,12 @@ class EncuestasRepositoryImpl(
                 estado = "pending"
             )
             colaSyncDao.insertSyncTask(tareaSincronizacion)
-            
-            // Disparar sincronización inmediata
-            val context = com.minsalud.encuestas.MinsaludApplication.appContext
-            if (context != null) {
-                val constraints = androidx.work.Constraints.Builder()
-                    .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
-                    .build()
-                val syncWork = androidx.work.OneTimeWorkRequestBuilder<com.minsalud.encuestas.worker.SyncWorker>()
-                    .setConstraints(constraints)
-                    .build()
-                androidx.work.WorkManager.getInstance(context).enqueue(syncWork)
-            }
         }
+
+        // El encolado va FUERA de la transacción a propósito: si WorkManager
+        // fallara al encolar dentro de ella, se revertiría la encuesta ya guardada.
+        // Con la transacción cerrada, el dato queda a salvo pase lo que pase aquí.
+        MinsaludApplication.appContext?.let { SyncScheduler.sincronizarAhora(it) }
     }
 
     fun obtenerTodasLasPersonas(): Flow<List<PersonaEntity>> {

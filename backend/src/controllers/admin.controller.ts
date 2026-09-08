@@ -20,10 +20,24 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             const resultConflictos = await client.query('SELECT COUNT(*) FROM log_conflictos');
             const totalConflictos = parseInt(resultConflictos.rows[0].count, 10);
 
+            // Encuestadores habilitados para capturar en campo
+            const resultEncuestadores = await client.query(
+                "SELECT COUNT(*) FROM usuarios WHERE activo = TRUE AND rol = 'encuestador'"
+            );
+            const encuestadoresActivos = parseInt(resultEncuestadores.rows[0].count, 10);
+
+            // Ultima subida recibida desde cualquier celular
+            const resultUltima = await client.query(
+                'SELECT MAX(fecha_sincronizacion) AS ultima FROM historial_encuestas'
+            );
+            const ultimaSincronizacion = resultUltima.rows[0].ultima;
+
             res.status(200).json({
                 totalEncuestas,
                 totalPersonas,
-                totalConflictos
+                totalConflictos,
+                encuestadoresActivos,
+                ultimaSincronizacion
             });
         } finally {
             client.release();
@@ -64,13 +78,50 @@ export const getConflictLogs = async (req: Request, res: Response): Promise<void
     }
 };
 
+type TipoReporte = 'completo' | 'nuevos' | 'conflictos';
+
+const TIPOS_VALIDOS: TipoReporte[] = ['completo', 'nuevos', 'conflictos'];
+
+/**
+ * Reporte CSV. La pantalla de Reportes ofrece tipo y rango de fechas; aqui se
+ * traducen a filtros SQL reales — antes se ignoraban y siempre salia el mismo
+ * volcado completo.
+ */
 export const downloadCsvReport = async (req: Request, res: Response): Promise<void> => {
+    const tipoSolicitado = String(req.query.tipo || 'completo') as TipoReporte;
+    const tipo: TipoReporte = TIPOS_VALIDOS.includes(tipoSolicitado) ? tipoSolicitado : 'completo';
+
+    const desde = typeof req.query.desde === 'string' && req.query.desde ? req.query.desde : null;
+    const hasta = typeof req.query.hasta === 'string' && req.query.hasta ? req.query.hasta : null;
+
     try {
         const client = await pool.connect();
         try {
-            // Traemos las últimas 500 encuestas para el reporte
+            const condiciones: string[] = [];
+            const valores: unknown[] = [];
+
+            if (desde) {
+                valores.push(desde);
+                condiciones.push(`he.fecha_encuesta >= $${valores.length}`);
+            }
+            if (hasta) {
+                // El input date entrega solo el dia: se incluye la jornada completa.
+                valores.push(hasta);
+                condiciones.push(`he.fecha_encuesta < ($${valores.length}::date + INTERVAL '1 day')`);
+            }
+            if (tipo === 'nuevos') {
+                condiciones.push('he.es_actualizacion = FALSE');
+            }
+            if (tipo === 'conflictos') {
+                condiciones.push(
+                    'EXISTS (SELECT 1 FROM log_conflictos lc WHERE lc.id_encuesta_nueva = he.id_encuesta)'
+                );
+            }
+
+            const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
             const result = await client.query(`
-                SELECT 
+                SELECT
                     he.id_encuesta,
                     he.numero_documento,
                     p.nombres,
@@ -81,10 +132,11 @@ export const downloadCsvReport = async (req: Request, res: Response): Promise<vo
                     he.datos_recolectados
                 FROM historial_encuestas he
                 JOIN personas p ON he.numero_documento = p.numero_documento
-                ORDER BY he.fecha_sincronizacion DESC
-                LIMIT 500
-            `);
-            
+                ${where}
+                ORDER BY he.fecha_sincronizacion DESC NULLS LAST
+                LIMIT 5000
+            `, valores);
+
             const records = result.rows.map(row => {
                 const datos = row.datos_recolectados || {};
                 return {
@@ -101,11 +153,18 @@ export const downloadCsvReport = async (req: Request, res: Response): Promise<vo
                 };
             });
 
+            // json2csv no puede inferir columnas de un arreglo vacio: se avisa
+            // en vez de devolver un CSV roto.
+            if (records.length === 0) {
+                res.status(404).json({ error: 'No hay registros para los filtros seleccionados' });
+                return;
+            }
+
             const json2csvParser = new Parser();
             const csv = json2csvParser.parse(records);
 
             res.header('Content-Type', 'text/csv');
-            res.attachment('reporte_encuestas.csv');
+            res.attachment(`reporte_${tipo}.csv`);
             res.status(200).send(csv);
 
         } finally {
@@ -113,6 +172,57 @@ export const downloadCsvReport = async (req: Request, res: Response): Promise<vo
         }
     } catch (error) {
         console.error('Error generating CSV report:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+/**
+ * Historial inmutable de una persona: todas las versiones sincronizadas de sus
+ * encuestas, de la mas reciente a la mas antigua.
+ */
+export const getHistorialPersona = async (req: Request, res: Response): Promise<void> => {
+    const { documento } = req.params;
+
+    try {
+        const client = await pool.connect();
+        try {
+            const persona = await client.query(
+                'SELECT numero_documento, nombres, apellidos FROM personas WHERE numero_documento = $1',
+                [documento]
+            );
+
+            if (persona.rowCount === 0) {
+                res.status(404).json({ error: 'Persona no encontrada' });
+                return;
+            }
+
+            const historial = await client.query(`
+                SELECT
+                    he.id_encuesta,
+                    he.datos_recolectados,
+                    he.fecha_encuesta,
+                    he.fecha_sincronizacion,
+                    he.es_actualizacion,
+                    he.version_anterior_id,
+                    u.nombre_completo AS encuestador,
+                    EXISTS (
+                        SELECT 1 FROM log_conflictos lc WHERE lc.id_encuesta_nueva = he.id_encuesta
+                    ) AS tuvo_conflicto
+                FROM historial_encuestas he
+                LEFT JOIN usuarios u ON he.id_encuestador = u.id_usuario
+                WHERE he.numero_documento = $1
+                ORDER BY he.fecha_encuesta DESC
+            `, [documento]);
+
+            res.status(200).json({
+                persona: persona.rows[0],
+                historial: historial.rows
+            });
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Error fetching historial:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };

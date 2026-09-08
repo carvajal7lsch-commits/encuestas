@@ -1,11 +1,31 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ShieldAlert, FileSpreadsheet, Users, FileText, Download, ServerCog, LogOut } from 'lucide-react';
+import { ShieldAlert, FileSpreadsheet, Users, FileText, Download, ServerCog, LogOut, LayoutDashboard } from 'lucide-react';
 import './Layout.css';
+
+/** Nombre del APK publicado en frontend/public por scripts/publicar-apk.ps1. */
+const APK_FILE = 'EncuestasOffline.apk';
+
+interface UsuarioSesion {
+  nombre_completo?: string;
+  nombre?: string;
+  rol?: string;
+}
+
+const leerUsuario = (): UsuarioSesion => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}') as UsuarioSesion;
+  } catch {
+    return {};
+  }
+};
 
 export default function Layout() {
   const navigate = useNavigate();
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : { nombre: 'Ana Supervisor', rol: 'Admin' };
+  // El backend devuelve nombre_completo; se aceptan ambas formas para no
+  // depender de datos de ejemplo quemados en el código.
+  const user = leerUsuario();
+  const nombre = user.nombre_completo || user.nombre || 'Administrador';
+  const rol = user.rol || 'admin';
 
   const handleLogout = () => {
     if (window.confirm('¿Está seguro de que desea cerrar la sesión de administración?')) {
@@ -23,6 +43,10 @@ export default function Layout() {
           <h2 className="logo-text">Encuestas<span>Offline</span></h2>
         </div>
         <nav className="sidebar-nav">
+          <NavLink to="/dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <LayoutDashboard size={20} />
+            <span>Resumen</span>
+          </NavLink>
           <NavLink to="/personas" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <FileText size={20} />
             <span>Personas</span>
@@ -42,17 +66,18 @@ export default function Layout() {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="btn-download-apk" onClick={() => alert('Descargando APK Móvil EncuestasOffline...')}>
+          {/* Descarga real del APK servido por el propio sitio. */}
+          <a className="btn-download-apk" href={`/${APK_FILE}`} download={APK_FILE}>
             <Download size={20} />
             <span>Descargar App</span>
-          </button>
+          </a>
           
           <div className="user-profile-box">
             <div className="user-profile">
-              <div className="avatar">{user.nombre ? user.nombre.charAt(0).toUpperCase() : 'A'}</div>
+              <div className="avatar">{nombre.charAt(0).toUpperCase()}</div>
               <div className="user-details">
-                <span className="user-name">{user.nombre || 'Ana Supervisor'}</span>
-                <span className="user-role">{user.rol || 'Admin'}</span>
+                <span className="user-name" title={nombre}>{nombre}</span>
+                <span className="user-role">{rol}</span>
               </div>
             </div>
             

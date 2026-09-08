@@ -227,3 +227,15 @@
   color: white;
   border-color: transparent;
 }
+
+/* Aviso de resultado / validación bajo el botón de generar. */
+.reporte-aviso {
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.reporte-aviso--error {
+  color: var(--error-color);
+}

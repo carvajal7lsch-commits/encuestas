@@ -19,6 +19,13 @@ yarn-error.log
 .env.test.local
 .env.production.local
 
+# Firma de la APK — NUNCA subir al repo.
+# Si esta llave se pierde, Android ya no acepta actualizaciones sobre la app
+# instalada y toca desinstalar en cada celular. Guarda una copia aparte.
+Encuestasoffline/*.jks
+Encuestasoffline/*.keystore
+Encuestasoffline/keystore.properties
+
 # Android (Encuestasoffline)
 Encuestasoffline/build/
 Encuestasoffline/.gradle/

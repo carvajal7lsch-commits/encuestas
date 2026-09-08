@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ruta desde la que el FileProvider expone el APK descargado al instalador
+     del sistema. Coincide con getExternalFilesDir(DIRECTORY_DOWNLOADS). -->
+<paths>
+    <external-files-path
+        name="descargas_app"
+        path="Download/" />
+</paths>

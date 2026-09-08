@@ -16,6 +16,10 @@ interface ColaSyncDao {
     @Query("SELECT * FROM cola_sincronizacion WHERE estado = 'pending' ORDER BY id ASC")
     suspend fun getPendingTasks(): List<ColaSyncEntity>
 
+    /** Cola completa (cualquier estado): la usa la reconciliación del SyncWorker. */
+    @Query("SELECT * FROM cola_sincronizacion")
+    suspend fun getAllTasks(): List<ColaSyncEntity>
+
     @Query("SELECT COUNT(*) FROM cola_sincronizacion WHERE estado = 'pending'")
     fun getPendingCountFlow(): Flow<Int>
 

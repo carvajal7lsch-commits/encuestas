@@ -391,9 +391,14 @@ fun FormScreen(
                                     timeZone = TimeZone.getTimeZone("UTC")
                                 }
 
+                                // Sin nombres y apellidos el servidor guardaba la
+                                // persona como "Desconocido (Sincronizado)" y el panel
+                                // de administración quedaba sin poder identificarla.
                                 val syncMap = mutableMapOf<String, Any>(
                                     "idEncuesta" to idEncuesta,
                                     "numeroDocumento" to documento,
+                                    "nombres" to nombres,
+                                    "apellidos" to apellidos,
                                     "datosRecolectados" to jsonPayload,
                                     "fechaEncuesta" to isoDateFormat.format(Date(fechaEncuesta))
                                 )

@@ -1,6 +1,7 @@
 package com.minsalud.encuestas.ui.login
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AssignmentInd
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -23,7 +25,31 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.minsalud.encuestas.worker.SyncScheduler
 import kotlinx.coroutines.launch
+
+/** Encuestador de prueba creado por el seed del backend (scripts/seedUsers.ts). */
+private const val DEMO_USUARIO = "998877"
+private const val DEMO_PASSWORD = "123456"
+
+@Composable
+private fun CredencialDemo(etiqueta: String, valor: String) {
+    Row(
+        modifier = Modifier.padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = "$etiqueta:",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = valor,
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
 
 @Composable
 fun LoginScreen(
@@ -205,6 +231,9 @@ fun LoginScreen(
                                     val response = api.login(request)
                                     if (response.isSuccessful && response.body() != null) {
                                         tokenManager.saveToken(response.body()!!.token)
+                                        // Ya hay token: lo que quedó en la cola de una
+                                        // jornada sin sesión puede subir de inmediato.
+                                        SyncScheduler.sincronizarAhora(context)
                                         onLoginSuccess()
                                     } else {
                                         errorMessage = "Credenciales incorrectas o usuario inactivo."
@@ -235,7 +264,56 @@ fun LoginScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Credenciales de demostración: evitan tener que recordarlas
+                    // durante las pruebas y la sustentación.
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.VpnKey,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Text(
+                                    text = "Acceso de prueba",
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            CredencialDemo("Usuario", DEMO_USUARIO)
+                            CredencialDemo("Contraseña", DEMO_PASSWORD)
+
+                            TextButton(
+                                onClick = {
+                                    username = DEMO_USUARIO
+                                    password = DEMO_PASSWORD
+                                    errorMessage = null
+                                },
+                                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Usar estas credenciales",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
                         text = "Persistencia Offline 100% Cifrada",

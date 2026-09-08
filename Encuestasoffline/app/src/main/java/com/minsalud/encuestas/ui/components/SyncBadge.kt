@@ -24,13 +24,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.work.Constraints
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import com.minsalud.encuestas.data.local.AppDatabase
 import com.minsalud.encuestas.data.repository.EncuestasRepositoryImpl
-import com.minsalud.encuestas.worker.SyncWorker
+import com.minsalud.encuestas.worker.SyncScheduler
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -96,13 +92,7 @@ fun SyncStatusBadge(
             .clip(RoundedCornerShape(20.dp))
             .clickable {
                 try {
-                    val constraints = Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build()
-                    val syncWork = OneTimeWorkRequestBuilder<SyncWorker>()
-                        .setConstraints(constraints)
-                        .build()
-                    WorkManager.getInstance(context).enqueue(syncWork)
+                    SyncScheduler.sincronizarAhora(context)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
