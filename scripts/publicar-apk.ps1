@@ -89,14 +89,51 @@ function Invocar {
         if ($Silencioso) {
             & $Programa @Argumentos 2>&1 | Out-Null
         } else {
+            # Write-Host y no "$_" a secas: en PowerShell todo lo que llega al
+            # stream de salida forma parte del valor que devuelve la funcion,
+            # asi que emitir las lineas ahi contaminaria el codigo de salida.
             # El "$_" convierte los ErrorRecord del stderr en texto normal,
             # para que la salida no se pinte como si todo hubiera fallado.
-            & $Programa @Argumentos 2>&1 | ForEach-Object { "$_" }
+            & $Programa @Argumentos 2>&1 | ForEach-Object { Write-Host "$_" }
         }
         return $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $previo
     }
+}
+
+<#
+    Ubica un JDK para Gradle.
+
+    Se prefiere el que el usuario ya tenga configurado; si no hay ninguno, se
+    usa el JBR que trae Android Studio, que es exactamente el mismo con el que
+    compila el IDE. Asi el script no depende de que JAVA_HOME este definido en
+    el entorno de la terminal.
+#>
+function ResolverJavaHome {
+    if ($env:JAVA_HOME -and (Test-Path (Join-Path $env:JAVA_HOME 'bin\java.exe'))) {
+        return $env:JAVA_HOME
+    }
+
+    $candidatos = @(
+        (Join-Path $env:ProgramFiles 'Android\Android Studio\jbr'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Android\Android Studio\jbr'),
+        (Join-Path $env:LOCALAPPDATA 'Programs\Android Studio\jbr')
+    )
+
+    foreach ($candidato in $candidatos) {
+        if ($candidato -and (Test-Path (Join-Path $candidato 'bin\java.exe'))) {
+            return $candidato
+        }
+    }
+
+    $java = Get-Command java -ErrorAction SilentlyContinue
+    if ($java) {
+        # ...\bin\java.exe  ->  ...
+        return (Split-Path -Parent (Split-Path -Parent $java.Source))
+    }
+
+    throw 'No se encontro un JDK. Instala Android Studio o define JAVA_HOME apuntando a un JDK 17 o superior.'
 }
 
 # Igual que Invocar, pero devuelve la salida en vez de imprimirla.
@@ -184,6 +221,8 @@ if ($Publicar) {
 }
 
 # --- 2. Compilar y firmar ----------------------------------------------------
+$env:JAVA_HOME = ResolverJavaHome
+Escribir "JDK: $env:JAVA_HOME"
 Escribir 'Compilando APK de release (puede tardar unos minutos)...'
 
 Push-Location $dirAndroid
