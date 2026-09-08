@@ -4,7 +4,7 @@
   "apkUrl": "https://github.com/carvajal7lsch-commits/encuestas/releases/download/v1.1.0/EncuestasOffline.apk",
   "tamanoMb": 26.0,
   "obligatoria": false,
-  "publicadaEn": "2026-09-07",
+  "publicadaEn": "2026-09-08",
   "notas": [
     "Los registros ya no se quedan marcados como \"Local\" cuando sí subieron al servidor.",
     "La app ahora te avisa sola cuando hay una versión nueva.",
