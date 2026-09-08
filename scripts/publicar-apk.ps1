@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Compila, firma y publica la APK de EncuestasOffline en un solo comando.
 
@@ -6,37 +6,47 @@
     Reemplaza el paso manual por Android Studio. Hace todo el ciclo:
       1. Sube el versionCode / versionName (opcional, con -Bump).
       2. Compila el APK de release y lo firma con encuestas-release.jks.
-      3. Lo copia a frontend/public/ para que lo sirva el sitio.
-      4. Genera frontend/public/app-version.json, que es lo que la app instalada
-         consulta al abrirse para saber que hay versión nueva.
-      5. Opcionalmente commitea y hace push (con -Publicar), lo que dispara el
-         redespliegue del frontend en el VPS.
+      3. Publica el APK como asset de un GitHub Release (tag vX.Y.Z).
+      4. Genera frontend/public/app-version.json apuntando a ese asset, que es
+         lo que la app instalada consulta al abrirse para saber que hay version
+         nueva.
+      5. Commitea y sube el manifiesto, lo que dispara el redespliegue del
+         frontend en el VPS.
 
-    Las notas de la versión salen de Encuestasoffline/release-notes.txt
-    (una por línea). Se muestran dentro del diálogo de actualización.
+    El APK NO se commitea: vive en el Release. Cada version publicada solia
+    agregar ~26 MB permanentes al historial de git, lo que hacia los push
+    lentos y propensos a fallar con HTTP 408.
+
+    Las notas de la version salen de Encuestasoffline/release-notes.txt
+    (una por linea). Se muestran dentro del dialogo de actualizacion.
 
 .PARAMETER Bump
-    Incrementa versionCode en 1 y sube el último número del versionName.
+    Incrementa versionCode en 1 y sube el ultimo numero del versionName.
 
 .PARAMETER Version
-    Fija un versionName explícito (ej. 1.2.0). Implica -Bump del versionCode.
+    Fija un versionName explicito (ej. 1.2.0). Implica -Bump del versionCode.
 
 .PARAMETER Publicar
-    Hace git add/commit/push de la APK y el manifiesto al terminar.
+    Crea el GitHub Release y hace commit/push del manifiesto. Sin esta bandera
+    solo compila y firma, para poder probar el APK antes de publicarlo.
+
+.PARAMETER Borrador
+    Crea el Release como borrador, para revisarlo antes de hacerlo publico.
 
 .EXAMPLE
     .\scripts\publicar-apk.ps1 -Bump -Publicar
-    Sube la versión, compila, firma, publica y empuja al repo.
+    Sube la version, compila, firma, crea el Release y publica el manifiesto.
 
 .EXAMPLE
     .\scripts\publicar-apk.ps1
-    Recompila la versión actual sin tocar números ni git.
+    Solo compila y firma la version actual, sin publicar nada.
 #>
 [CmdletBinding()]
 param(
     [switch]$Bump,
     [string]$Version,
-    [switch]$Publicar
+    [switch]$Publicar,
+    [switch]$Borrador
 )
 
 $ErrorActionPreference = 'Stop'
@@ -46,26 +56,42 @@ $dirAndroid  = Join-Path $raiz 'Encuestasoffline'
 $gradleFile  = Join-Path $dirAndroid 'app\build.gradle.kts'
 $keystoreCfg = Join-Path $dirAndroid 'keystore.properties'
 $notasFile   = Join-Path $dirAndroid 'release-notes.txt'
-$publicDir   = Join-Path $raiz 'frontend\public'
-$apkPublico  = Join-Path $publicDir 'EncuestasOffline.apk'
-$manifiesto  = Join-Path $publicDir 'app-version.json'
+$manifiesto  = Join-Path $raiz 'frontend\public\app-version.json'
+$generador   = Join-Path $PSScriptRoot 'escribir-manifiesto.py'
 
-# URL pública desde la que el celular descarga la actualización.
-$baseUrl = 'https://encuestas.secarvajal.com'
+# Nombre con el que se sube el asset al Release.
+$nombreAsset = 'EncuestasOffline.apk'
 
 function Escribir($mensaje, $color = 'Cyan') {
     Write-Host "  $mensaje" -ForegroundColor $color
 }
 
-Write-Host "`n== Publicación de APK — EncuestasOffline ==`n" -ForegroundColor White
+Write-Host "`n== Publicacion de APK - EncuestasOffline ==`n" -ForegroundColor White
 
 # --- 0. Requisitos -----------------------------------------------------------
 if (-not (Test-Path $keystoreCfg)) {
     throw "Falta $keystoreCfg. Sin keystore el APK sale sin firmar y Android no lo instala."
 }
 if (-not (Test-Path $gradleFile)) {
-    throw "No se encontró $gradleFile."
+    throw "No se encontro $gradleFile."
 }
+
+if ($Publicar) {
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        throw 'Falta GitHub CLI (gh). Instalalo desde https://cli.github.com para poder publicar Releases.'
+    }
+    gh auth status *> $null
+    if ($LASTEXITCODE -ne 0) {
+        throw 'GitHub CLI no esta autenticado. Ejecuta "gh auth login" una vez y vuelve a intentar.'
+    }
+}
+
+# Slug del repositorio, leido del remoto para no quemarlo en el script.
+$remoto = (git -C $raiz remote get-url origin).Trim()
+if ($remoto -notmatch 'github\.com[:/](?<slug>[^/]+/[^/\.]+)') {
+    throw "No se pudo deducir el repositorio de GitHub desde el remoto: $remoto"
+}
+$slug = $Matches['slug']
 
 # --- 1. Versionado -----------------------------------------------------------
 $gradle = Get-Content $gradleFile -Raw
@@ -92,11 +118,21 @@ if ($Bump -or $Version) {
     $gradle = $gradle -replace 'versionName\s*=\s*"[^"]+"', "versionName = `"$nuevoName`""
     Set-Content -Path $gradleFile -Value $gradle -Encoding utf8 -NoNewline
 
-    Escribir "Versión: $versionName ($versionCode)  ->  $nuevoName ($nuevoCode)" 'Yellow'
+    Escribir "Version: $versionName ($versionCode)  ->  $nuevoName ($nuevoCode)" 'Yellow'
     $versionCode = $nuevoCode
     $versionName = $nuevoName
 } else {
-    Escribir "Versión: $versionName ($versionCode)  [sin cambios]"
+    Escribir "Version: $versionName ($versionCode)  [sin cambios]"
+}
+
+$tag = "v$versionName"
+
+# El tag no puede existir ya: seria una version distinta con el mismo nombre.
+if ($Publicar) {
+    gh release view $tag --repo $slug *> $null
+    if ($LASTEXITCODE -eq 0) {
+        throw "El release $tag ya existe en $slug. Usa -Bump o -Version para publicar una version nueva."
+    }
 }
 
 # --- 2. Compilar y firmar ----------------------------------------------------
@@ -105,73 +141,82 @@ Escribir 'Compilando APK de release (puede tardar unos minutos)...'
 Push-Location $dirAndroid
 try {
     & .\gradlew.bat assembleRelease --console=plain -q
-    if ($LASTEXITCODE -ne 0) { throw "La compilación de Gradle falló (código $LASTEXITCODE)." }
+    if ($LASTEXITCODE -ne 0) { throw "La compilacion de Gradle fallo (codigo $LASTEXITCODE)." }
 } finally {
     Pop-Location
 }
 
-# El build está redirigido fuera de OneDrive (ver app/build.gradle.kts).
+# El build esta redirigido fuera de OneDrive (ver app/build.gradle.kts).
 $dirBuild = Join-Path $env:USERPROFILE '.gradle_build_encuestas\app\outputs\apk\release'
 $apk = Get-ChildItem -Path $dirBuild -Filter '*.apk' -ErrorAction SilentlyContinue |
        Sort-Object LastWriteTime -Descending |
        Select-Object -First 1
 
-if (-not $apk) { throw "No se encontró ningún APK en $dirBuild." }
+if (-not $apk) { throw "No se encontro ningun APK en $dirBuild." }
 if ($apk.Name -match 'unsigned') {
-    throw "El APK salió SIN FIRMAR ($($apk.Name)). Revisa $keystoreCfg."
+    throw "El APK salio SIN FIRMAR ($($apk.Name)). Revisa $keystoreCfg."
 }
 
 $tamanoMb = [math]::Round($apk.Length / 1MB, 1)
 Escribir "APK firmado: $($apk.Name) ($tamanoMb MB)" 'Green'
 
-# --- 3. Publicar en el frontend ---------------------------------------------
-if (-not (Test-Path $publicDir)) { throw "No existe $publicDir." }
-Copy-Item $apk.FullName $apkPublico -Force
-Escribir "Copiado a frontend/public/EncuestasOffline.apk"
+# Se copia a un nombre estable para que el asset del Release no se llame
+# "app-release.apk" al descargarlo.
+$apkParaSubir = Join-Path $env:TEMP $nombreAsset
+Copy-Item $apk.FullName $apkParaSubir -Force
+
+if (-not $Publicar) {
+    Write-Host "`nCompilado sin publicar." -ForegroundColor Green
+    Write-Host "APK listo en: $apkParaSubir" -ForegroundColor DarkGray
+    Write-Host "Para publicarlo: .\scripts\publicar-apk.ps1 -Publicar`n" -ForegroundColor DarkGray
+    return
+}
+
+# --- 3. Publicar el Release --------------------------------------------------
+Escribir "Creando release $tag en $slug..."
+
+$notasRelease = Join-Path $env:TEMP 'encuestas-release-notes.md'
+if (Test-Path $notasFile) {
+    $lineas = Get-Content $notasFile -Encoding utf8 | Where-Object { $_.Trim() -ne '' }
+    ($lineas | ForEach-Object { "- $($_.Trim())" }) -join "`n" |
+        Set-Content -Path $notasRelease -Encoding utf8
+} else {
+    'Mejoras de estabilidad y correccion de errores.' | Set-Content -Path $notasRelease -Encoding utf8
+}
+
+$argsRelease = @(
+    'release', 'create', $tag, $apkParaSubir,
+    '--repo', $slug,
+    '--title', "EncuestasOffline $versionName",
+    '--notes-file', $notasRelease
+)
+if ($Borrador) { $argsRelease += '--draft' }
+
+& gh @argsRelease
+if ($LASTEXITCODE -ne 0) { throw 'No se pudo crear el GitHub Release.' }
+
+$urlApk = "https://github.com/$slug/releases/download/$tag/$nombreAsset"
+Escribir 'Release publicado' 'Green'
 
 # --- 4. Manifiesto que consulta la app --------------------------------------
-$notas = @()
-if (Test-Path $notasFile) {
-    $notas = @(Get-Content $notasFile -Encoding utf8 |
-               Where-Object { $_.Trim() -ne '' } |
-               ForEach-Object { $_.Trim() })
-}
-if ($notas.Count -eq 0) { $notas = @('Mejoras de estabilidad y corrección de errores.') }
+& python $generador $versionCode $versionName $apkParaSubir $urlApk
+if ($LASTEXITCODE -ne 0) { throw 'No se pudo generar el manifiesto.' }
 
-$info = [ordered]@{
-    versionCode  = $versionCode
-    versionName  = $versionName
-    apkUrl       = "$baseUrl/EncuestasOffline.apk"
-    tamanoMb     = $tamanoMb
-    obligatoria  = $false
-    publicadaEn  = (Get-Date).ToString('yyyy-MM-dd')
-    notas        = $notas
-}
-
-# UTF-8 SIN BOM a proposito: Set-Content -Encoding utf8 en PowerShell 5.1
-# antepone el BOM y el parser JSON de la app Android lo rechaza.
-$sinBom = New-Object System.Text.UTF8Encoding($false)
-[System.IO.File]::WriteAllText($manifiesto, ($info | ConvertTo-Json -Depth 4), $sinBom)
-Escribir "Manifiesto escrito: frontend/public/app-version.json"
-
-# --- 5. Push opcional --------------------------------------------------------
-if ($Publicar) {
-    Escribir 'Subiendo cambios al repositorio...'
-    Push-Location $raiz
-    try {
-        git add $apkPublico $manifiesto $gradleFile
-        git commit -m "chore(apk): publicar version $versionName ($versionCode)"
-        if ($LASTEXITCODE -ne 0) { throw 'git commit falló.' }
-        git push
-        if ($LASTEXITCODE -ne 0) { throw 'git push falló.' }
-        Escribir 'Publicado. El VPS redesplegará el frontend.' 'Green'
-    } finally {
-        Pop-Location
-    }
+# --- 5. Push del manifiesto (unos cientos de bytes) --------------------------
+Escribir 'Subiendo el manifiesto al repositorio...'
+Push-Location $raiz
+try {
+    git add $manifiesto $gradleFile
+    git commit -m "chore(apk): publicar version $versionName ($versionCode)"
+    if ($LASTEXITCODE -ne 0) { throw 'git commit fallo.' }
+    git push
+    if ($LASTEXITCODE -ne 0) { throw 'git push fallo.' }
+    Escribir 'Publicado. El VPS redesplegara el frontend.' 'Green'
+} finally {
+    Pop-Location
 }
 
-Write-Host "`nListo — version $versionName ($versionCode)." -ForegroundColor Green
-if (-not $Publicar) {
-    Write-Host "Para publicarlo: git add frontend/public && git commit && git push" -ForegroundColor DarkGray
-}
-Write-Host "Los celulares con la app instalada verán el aviso al abrirla.`n" -ForegroundColor DarkGray
+Remove-Item $apkParaSubir -Force -ErrorAction SilentlyContinue
+
+Write-Host "`nListo - version $versionName ($versionCode)." -ForegroundColor Green
+Write-Host "Los celulares con la app instalada veran el aviso al abrirla.`n" -ForegroundColor DarkGray

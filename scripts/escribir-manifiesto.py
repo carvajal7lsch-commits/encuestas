@@ -1,14 +1,18 @@
 """Genera frontend/public/app-version.json, el manifiesto que la app instalada
-consulta al abrirse para saber si hay una versión nueva publicada.
+consulta al abrirse para saber si hay una version nueva publicada.
 
-Lo usa el workflow "Publicar APK" de GitHub Actions. Para publicar desde tu
-equipo usa scripts/publicar-apk.ps1, que hace lo mismo junto con la compilación.
+El manifiesto lo sigue sirviendo el sitio propio (pesa menos de 1 KB), pero el
+APK ya no vive en el repositorio: se publica como asset de un GitHub Release y
+el manifiesto apunta alli. Asi el historial de git deja de crecer ~26 MB por
+cada version publicada.
+
+Lo usan scripts/publicar-apk.ps1 y el workflow "Publicar APK".
 
 Uso:
-    python scripts/escribir-manifiesto.py <versionCode> <versionName> [notas]
+    python scripts/escribir-manifiesto.py <versionCode> <versionName> <rutaApk> <urlApk> [notas]
 
 Las notas se separan con " | ". Si no se pasan, se leen de
-Encuestasoffline/release-notes.txt (una por línea).
+Encuestasoffline/release-notes.txt (una por linea).
 """
 
 import datetime
@@ -16,15 +20,12 @@ import json
 import os
 import sys
 
-BASE_URL = "https://encuestas.secarvajal.com"
-
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-APK = os.path.join(RAIZ, "frontend", "public", "EncuestasOffline.apk")
 MANIFIESTO = os.path.join(RAIZ, "frontend", "public", "app-version.json")
 NOTAS_TXT = os.path.join(RAIZ, "Encuestasoffline", "release-notes.txt")
 
 
-def leer_notas(argumento: str) -> list[str]:
+def leer_notas(argumento):
     if argumento.strip():
         notas = [n.strip() for n in argumento.split("|") if n.strip()]
         if notas:
@@ -36,37 +37,43 @@ def leer_notas(argumento: str) -> list[str]:
     except FileNotFoundError:
         notas = []
 
-    return notas or ["Mejoras de estabilidad y corrección de errores."]
+    return notas or ["Mejoras de estabilidad y correccion de errores."]
 
 
 def main() -> int:
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 5:
         print(__doc__)
         return 2
 
     version_code = int(sys.argv[1])
     version_name = sys.argv[2]
-    notas = leer_notas(sys.argv[3] if len(sys.argv) > 3 else "")
+    ruta_apk = sys.argv[3]
+    url_apk = sys.argv[4]
+    notas = leer_notas(sys.argv[5] if len(sys.argv) > 5 else "")
 
-    if not os.path.exists(APK):
-        print(f"No se encontró el APK publicado en {APK}", file=sys.stderr)
+    if not os.path.exists(ruta_apk):
+        print(f"No se encontro el APK en {ruta_apk}", file=sys.stderr)
         return 1
 
     info = {
         "versionCode": version_code,
         "versionName": version_name,
-        "apkUrl": f"{BASE_URL}/EncuestasOffline.apk",
-        "tamanoMb": round(os.path.getsize(APK) / 1048576, 1),
+        # URL fija de esta version concreta, no la de "latest": el celular debe
+        # descargar exactamente la version que el manifiesto le anuncio.
+        "apkUrl": url_apk,
+        "tamanoMb": round(os.path.getsize(ruta_apk) / 1048576, 1),
         "obligatoria": False,
         "publicadaEn": datetime.date.today().isoformat(),
         "notas": notas,
     }
 
-    with open(MANIFIESTO, "w", encoding="utf-8") as archivo:
+    # Sin BOM: el parser JSON de la app Android lo rechaza.
+    with open(MANIFIESTO, "w", encoding="utf-8", newline="\n") as archivo:
         json.dump(info, archivo, ensure_ascii=False, indent=2)
         archivo.write("\n")
 
     print(f"Manifiesto escrito: {version_name} ({version_code}), {info['tamanoMb']} MB")
+    print(f"  apkUrl -> {url_apk}")
     return 0
 
 

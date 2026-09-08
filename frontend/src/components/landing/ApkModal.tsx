@@ -6,15 +6,22 @@ interface ApkModalProps {
   onClose: () => void;
 }
 
-/** Nombre estable: no lleva la versión, así el enlace nunca queda obsoleto. */
 const APK_FILE = 'EncuestasOffline.apk';
 
-/** Manifiesto que publica scripts/publicar-apk.ps1 junto al APK. */
+/**
+ * El APK vive como asset de un GitHub Release, no en este sitio. Esta URL
+ * siempre resuelve a la última versión publicada, así que no queda obsoleta.
+ */
+const APK_URL =
+  'https://github.com/carvajal7lsch-commits/encuestas/releases/latest/download/' + APK_FILE;
+
+/** Manifiesto con los datos de la versión publicada. Lo sirve este mismo sitio. */
 const VERSION_URL = '/app-version.json';
 
 interface VersionPublicada {
   versionName: string;
   tamanoMb?: number;
+  apkUrl?: string;
   notas?: string[];
 }
 
@@ -62,6 +69,10 @@ const ApkModal: React.FC<ApkModalProps> = ({ onClose }) => {
 
   const etiquetaVersion = version ? `Versión ${version.versionName}` : 'Última versión';
   const etiquetaTamano = version?.tamanoMb ? ` · ${version.tamanoMb} MB` : '';
+
+  // Si el manifiesto ya cargó se usa la URL exacta de esa versión; si no,
+  // el enlace a la última release publicada.
+  const urlDescarga = version?.apkUrl || APK_URL;
 
   const specs = [
     { icon: HardDrive, label: 'Archivo', value: APK_FILE },
@@ -124,9 +135,9 @@ const ApkModal: React.FC<ApkModalProps> = ({ onClose }) => {
           </ol>
 
           <a
-            href={'/' + APK_FILE}
-            download={APK_FILE}
+            href={urlDescarga}
             className="l-btn l-btn--primary btn-modal-download"
+            rel="noopener"
             onClick={onClose}
           >
             <Download size={18} />

@@ -19,6 +19,11 @@ yarn-error.log
 .env.test.local
 .env.production.local
 
+# El APK se publica como asset de un GitHub Release, no dentro del repo:
+# cada version agregaba ~26 MB permanentes al historial y los push empezaron
+# a fallar con HTTP 408. Ver scripts/publicar-apk.ps1.
+frontend/public/*.apk
+
 # Firma de la APK — NUNCA subir al repo.
 # Si esta llave se pierde, Android ya no acepta actualizaciones sobre la app
 # instalada y toca desinstalar en cada celular. Guarda una copia aparte.

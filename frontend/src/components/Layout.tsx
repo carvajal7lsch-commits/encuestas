@@ -2,8 +2,12 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ShieldAlert, FileSpreadsheet, Users, FileText, Download, ServerCog, LogOut, LayoutDashboard } from 'lucide-react';
 import './Layout.css';
 
-/** Nombre del APK publicado en frontend/public por scripts/publicar-apk.ps1. */
-const APK_FILE = 'EncuestasOffline.apk';
+/**
+ * El APK se distribuye como asset de un GitHub Release (ver
+ * scripts/publicar-apk.ps1). Esta URL siempre apunta a la última publicada.
+ */
+const APK_URL =
+  'https://github.com/carvajal7lsch-commits/encuestas/releases/latest/download/EncuestasOffline.apk';
 
 interface UsuarioSesion {
   nombre_completo?: string;
@@ -66,8 +70,7 @@ export default function Layout() {
         </nav>
 
         <div className="sidebar-footer">
-          {/* Descarga real del APK servido por el propio sitio. */}
-          <a className="btn-download-apk" href={`/${APK_FILE}`} download={APK_FILE}>
+          <a className="btn-download-apk" href={APK_URL} rel="noopener">
             <Download size={20} />
             <span>Descargar App</span>
           </a>

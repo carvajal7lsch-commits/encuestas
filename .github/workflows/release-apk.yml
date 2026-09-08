@@ -4,6 +4,10 @@ name: Publicar APK
 # Se dispara a mano desde la pestaña Actions de GitHub (botón "Run workflow"),
 # así que se puede lanzar incluso desde el celular.
 #
+# El APK se sube como asset de un GitHub Release; al repositorio solo entra el
+# manifiesto app-version.json (menos de 1 KB), que es lo que consultan los
+# celulares para enterarse de que hay una versión nueva.
+#
 # Requiere estos secretos del repositorio (Settings > Secrets > Actions):
 #   KEYSTORE_BASE64    -> encuestas-release.jks codificado en base64
 #   KEYSTORE_PASSWORD  -> storePassword de keystore.properties
@@ -33,7 +37,6 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v4
         with:
-          # Token con permiso de escritura para poder commitear la APK publicada.
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configurar JDK 17
@@ -79,6 +82,7 @@ jobs:
 
           echo "code=$CODE_NUEVO" >> "$GITHUB_OUTPUT"
           echo "name=$NAME_NUEVO" >> "$GITHUB_OUTPUT"
+          echo "tag=v$NAME_NUEVO" >> "$GITHUB_OUTPUT"
           echo "Publicando $NAME_NUEVO ($CODE_NUEVO)"
 
       - name: Compilar APK de release
@@ -92,9 +96,8 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --console=plain
 
-      - name: Publicar APK y manifiesto en el frontend
-        env:
-          NOTAS: ${{ github.event.inputs.notas }}
+      - name: Localizar el APK firmado
+        id: apk
         run: |
           set -e
           # El build está redirigido fuera del proyecto (ver app/build.gradle.kts).
@@ -102,22 +105,40 @@ jobs:
           test -n "$APK" || { echo "No se generó ningún APK"; exit 1; }
           case "$APK" in *unsigned*) echo "El APK salió sin firmar"; exit 1;; esac
 
-          cp "$APK" frontend/public/EncuestasOffline.apk
-          python3 scripts/escribir-manifiesto.py "${{ steps.version.outputs.code }}" "${{ steps.version.outputs.name }}" "$NOTAS"
+          # Nombre estable para el asset del Release.
+          cp "$APK" /tmp/EncuestasOffline.apk
+          echo "path=/tmp/EncuestasOffline.apk" >> "$GITHUB_OUTPUT"
 
-      - name: Commit y push de la publicación
+      - name: Publicar el GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTAS: ${{ github.event.inputs.notas }}
+        run: |
+          set -e
+          if [ -n "$NOTAS" ]; then
+            echo "$NOTAS" | tr '|' '\n' | sed 's/^ *//; s/ *$//; /^$/d; s/^/- /' > /tmp/notas.md
+          elif [ -f Encuestasoffline/release-notes.txt ]; then
+            sed 's/^ *//; s/ *$//; /^$/d; s/^/- /' Encuestasoffline/release-notes.txt > /tmp/notas.md
+          else
+            echo "- Mejoras de estabilidad y corrección de errores." > /tmp/notas.md
+          fi
+
+          gh release create "${{ steps.version.outputs.tag }}" "${{ steps.apk.outputs.path }}" \
+            --repo "${{ github.repository }}" \
+            --title "EncuestasOffline ${{ steps.version.outputs.name }}" \
+            --notes-file /tmp/notas.md
+
+      - name: Escribir el manifiesto que consultan los celulares
+        env:
+          NOTAS: ${{ github.event.inputs.notas }}
+        run: |
+          URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/EncuestasOffline.apk"
+          python3 scripts/escribir-manifiesto.py "${{ steps.version.outputs.code }}" "${{ steps.version.outputs.name }}" "${{ steps.apk.outputs.path }}" "$URL" "$NOTAS"
+
+      - name: Commit y push del manifiesto
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add frontend/public/EncuestasOffline.apk \
-                  frontend/public/app-version.json \
-                  Encuestasoffline/app/build.gradle.kts
+          git add frontend/public/app-version.json Encuestasoffline/app/build.gradle.kts
           git commit -m "chore(apk): publicar version ${{ steps.version.outputs.name }} (${{ steps.version.outputs.code }})"
           git push
-
-      - name: Adjuntar APK como artefacto
-        uses: actions/upload-artifact@v4
-        with:
-          name: EncuestasOffline-${{ steps.version.outputs.name }}
-          path: frontend/public/EncuestasOffline.apk
-          retention-days: 30
