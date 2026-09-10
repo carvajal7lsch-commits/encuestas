@@ -1,4 +1,4 @@
-import java.io.FileInputStream
+﻿import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
@@ -9,7 +9,7 @@ plugins {
 
 // Credenciales de firma. En tu equipo salen de Encuestasoffline/keystore.properties
 // (ignorado por git); en GitHub Actions, de variables de entorno con los secretos.
-// La firma DEBE ser siempre la misma: si cambia, Android rechaza la actualización
+// La firma DEBE ser siempre la misma: si cambia, Android rechaza la actualizaciÃ³n
 // sobre la app ya instalada y obliga a desinstalar.
 val propiedadesFirma = Properties().apply {
     val archivo = rootProject.file("keystore.properties")
@@ -19,7 +19,7 @@ val propiedadesFirma = Properties().apply {
 fun datoDeFirma(clave: String, variableEntorno: String): String? =
     propiedadesFirma.getProperty(clave) ?: System.getenv(variableEntorno)
 
-// Redirigir carpeta de compilación fuera de OneDrive para evitar bloqueos de archivos en Windows
+// Redirigir carpeta de compilaciÃ³n fuera de OneDrive para evitar bloqueos de archivos en Windows
 layout.buildDirectory.set(file("${System.getProperty("user.home")}/.gradle_build_encuestas/app"))
 
 android {
@@ -30,10 +30,10 @@ android {
         applicationId = "com.minsalud.encuestas"
         minSdk = 24
         targetSdk = 36
-        // Súbelos en cada publicación: el instalador de Android y el chequeo de
-        // actualización de la app comparan contra versionCode.
-        versionCode = 2
-        versionName = "1.1.0"
+        // SÃºbelos en cada publicaciÃ³n: el instalador de Android y el chequeo de
+        // actualizaciÃ³n de la app comparan contra versionCode.
+        versionCode = 3
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
