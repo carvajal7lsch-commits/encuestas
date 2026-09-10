@@ -390,7 +390,7 @@
 
 .tenue {
   color: var(--text-muted);
-  /* "Sin registrar" partia en dos lineas dentro de la columna de municipio. */
+  /* "Sin encuestador" no debe partirse en dos lineas dentro de la celda. */
   white-space: nowrap;
 }
 

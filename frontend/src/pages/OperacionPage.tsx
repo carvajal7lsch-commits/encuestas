@@ -252,7 +252,7 @@ export default function OperacionPage() {
       if (hasta && (!fecha || fecha > hasta)) return false;
       if (!termino) return true;
 
-      return [p.nombres, p.apellidos, p.numero_documento, p.municipio, p.ultimo_encuestador]
+      return [p.nombres, p.apellidos, p.numero_documento, p.ultimo_encuestador]
         .some((campo) => String(campo ?? '').toLowerCase().includes(termino));
     });
   }, [datos, busqueda, filtro, desde, hasta]);
@@ -309,19 +309,6 @@ export default function OperacionPage() {
       ),
     },
     {
-      clave: 'municipio',
-      encabezado: 'Municipio',
-      celda: (p) =>
-        p.municipio ? (
-          <span>
-            {p.municipio}
-            {p.departamento && <span className={estilos.tenue}> · {p.departamento}</span>}
-          </span>
-        ) : (
-          <span className={estilos.tenue}>Sin registrar</span>
-        ),
-    },
-    {
       clave: 'encuestador',
       encabezado: 'Última captura',
       celda: (p) => (
@@ -362,7 +349,7 @@ export default function OperacionPage() {
             <SearchInput
               valor={busqueda}
               onCambio={setBusqueda}
-              etiqueta="Buscar persona, municipio o encuestador"
+              etiqueta="Buscar persona, documento o encuestador"
               placeholder="Buscar…"
             />
             <IconButton etiqueta="Exportar a CSV" onClick={exportar} disabled={exportando}>
@@ -519,13 +506,13 @@ export default function OperacionPage() {
 
             {ficha && !cargandoFicha && (
               <>
+                {/* Solo lo que la APK produce. Municipio, telefono, EPS, ocupacion
+                    y estrato existen en la tabla personas, pero el formulario de
+                    campo no los pide: aqui salian siempre como "Sin registrar". */}
                 <dl className={estilos.ficha}>
                   {[
-                    ['Municipio', ficha.persona.municipio],
-                    ['Teléfono', ficha.persona.telefono],
-                    ['EPS', ficha.persona.eps],
-                    ['Ocupación', ficha.persona.ocupacion],
-                    ['Estrato', ficha.persona.estrato],
+                    ['Última captura', formatearRelativo(ficha.historial[0]?.fecha_encuesta ?? null, '')],
+                    ['Encuestador', ficha.historial[0]?.encuestador],
                     ['Versión', ficha.persona.sync_version],
                   ].map(([etiqueta, valor]) => (
                     <div key={String(etiqueta)} className={estilos.fichaItem}>
