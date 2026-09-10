@@ -1,16 +1,11 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  ClipboardList,
-  Users,
-  ShieldAlert,
-  UserCheck,
-  RefreshCcw,
-  ArrowRight,
-  CloudUpload
-} from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { RefreshCcw, AlertTriangle } from 'lucide-react';
 import { api } from '../services/api';
-import './DashboardPage.css';
+import { useRecurso } from '../hooks/useRecurso';
+import { formatearFechaCorta, formatearRelativo } from '../utils/fecha';
+import { AreaChart, IconButton, PageHeader, type PuntoSerie } from '../components/ui';
+import estilos from './DashboardPage.module.css';
 
 interface Stats {
   totalEncuestas: number;
@@ -20,119 +15,170 @@ interface Stats {
   ultimaSincronizacion: string | null;
 }
 
-const formatearFecha = (valor: string | null) => {
-  if (!valor) return 'Sin sincronizaciones aún';
-  const fecha = new Date(valor);
-  return Number.isNaN(fecha.getTime()) ? 'Fecha no disponible' : fecha.toLocaleString();
-};
+interface Serie {
+  dias: number;
+  serie: { dia: string; encuestas: number; conflictos: number }[];
+}
 
+const RANGOS = [
+  { dias: 7, texto: '7 días', periodo: 'en los últimos 7 días' },
+  { dias: 30, texto: '30 días', periodo: 'en los últimos 30 días' },
+  { dias: 90, texto: '90 días', periodo: 'en los últimos 90 días' },
+];
+
+/**
+ * Resumen del sistema.
+ *
+ * Antes eran cuatro modulos apilados: cuatro tarjetas de color, la grafica con
+ * sus filtros sueltos y una tarjeta entera dedicada a una fecha. Cada tarjeta
+ * llevaba icono de color, borde de color, una frase de apoyo y su propio enlace
+ * "Ver detalle", y los cuatro colores no codificaban nada: eran decoracion.
+ *
+ * Ahora hay una sola pieza. La grafica manda con su cifra protagonista, las
+ * cuatro cuentas acumuladas caen debajo en una fila discreta separada por
+ * filetes, y la fecha de la ultima sincronizacion se lee en la cabecera.
+ */
 export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const cargar = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      setStats(await api.getStats());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudieron cargar las estadísticas');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // El rango vive en la URL: asi el enlace de un resumen concreto se puede
+  // compartir y el boton atras del navegador funciona como se espera.
+  const [params, setParams] = useSearchParams();
+  const solicitado = Number(params.get('dias'));
+  const rango = RANGOS.find((r) => r.dias === solicitado) ?? RANGOS[1];
+  const setRango = (dias: number) => setParams({ dias: String(dias) }, { replace: true });
 
-  useEffect(() => {
-    cargar();
-  }, []);
+  const cargarStats = useCallback(() => api.getStats() as Promise<Stats>, []);
+  const { datos, cargando, error, recargar } = useRecurso<Stats>(cargarStats);
 
-  const tarjetas = [
+  const cargarSerie = useCallback(() => api.getSeries(rango.dias) as Promise<Serie>, [rango.dias]);
+  const serie = useRecurso<Serie>(cargarSerie, [rango.dias]);
+
+  const puntos = useMemo<PuntoSerie[]>(
+    () => (serie.datos?.serie ?? []).map((p) => ({ dia: p.dia, valor: p.encuestas })),
+    [serie.datos]
+  );
+
+  const metricas = [
     {
-      etiqueta: 'Encuestas sincronizadas',
-      valor: stats?.totalEncuestas,
-      detalle: 'Versiones recibidas desde los celulares',
-      icono: ClipboardList,
-      tono: 'azul',
-      destino: '/personas'
+      etiqueta: 'Encuestas',
+      valor: datos?.totalEncuestas,
+      ayuda: 'Versiones recibidas desde los celulares',
+      destino: '/personas',
     },
     {
-      etiqueta: 'Personas registradas',
-      valor: stats?.totalPersonas,
-      detalle: 'Ciudadanos únicos en la base consolidada',
-      icono: Users,
-      tono: 'verde',
-      destino: '/personas'
+      etiqueta: 'Personas',
+      valor: datos?.totalPersonas,
+      ayuda: 'Ciudadanos únicos en la base consolidada',
+      destino: '/personas',
     },
     {
-      etiqueta: 'Conflictos resueltos',
-      valor: stats?.totalConflictos,
-      detalle: 'Fusiones aplicadas por el Smart Merge',
-      icono: ShieldAlert,
-      tono: 'ambar',
-      destino: '/conflictos'
+      etiqueta: 'Conflictos',
+      valor: datos?.totalConflictos,
+      ayuda: 'Fusiones aplicadas por el Smart Merge',
+      destino: '/conflictos',
     },
     {
-      etiqueta: 'Encuestadores activos',
-      valor: stats?.encuestadoresActivos,
-      detalle: 'Cuentas habilitadas para capturar en campo',
-      icono: UserCheck,
-      tono: 'violeta',
-      destino: '/usuarios'
-    }
+      etiqueta: 'Encuestadores',
+      valor: datos?.encuestadoresActivos,
+      ayuda: 'Cuentas habilitadas para capturar en campo',
+      destino: '/usuarios',
+    },
   ];
 
+  const ultima = cargando
+    ? 'Consultando el estado de la operación…'
+    : error
+      ? 'No se pudo consultar el estado de la operación'
+      : datos?.ultimaSincronizacion
+        ? `Última sincronización ${formatearRelativo(datos.ultimaSincronizacion)} · ${formatearFechaCorta(datos.ultimaSincronizacion)}`
+        : 'Todavía no se ha recibido ninguna sincronización';
+
+  const controles = (
+    <div className={estilos.rangos} role="group" aria-label="Rango de la gráfica">
+      {RANGOS.map((opcion) => (
+        <button
+          key={opcion.dias}
+          type="button"
+          className={`${estilos.rango} ${rango.dias === opcion.dias ? estilos.rangoActivo : ''}`}
+          onClick={() => setRango(opcion.dias)}
+          aria-pressed={rango.dias === opcion.dias}
+        >
+          {opcion.texto}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="page-container">
-      <header className="page-header">
-        <div>
-          <h1 className="page-title">Resumen del sistema</h1>
-          <p className="page-subtitle">Estado consolidado de la operación en campo</p>
-        </div>
-        <div className="header-actions">
-          <button className="btn-icon glass-panel" onClick={cargar} title="Actualizar datos" disabled={loading}>
-            <RefreshCcw size={18} className={loading ? 'spinner' : ''} />
-          </button>
-        </div>
-      </header>
+    <div className={estilos.pagina}>
+      <PageHeader
+        titulo="Resumen del sistema"
+        subtitulo={ultima}
+        acciones={
+          <IconButton
+            etiqueta="Actualizar datos"
+            onClick={() => {
+              recargar();
+              serie.recargar();
+            }}
+            disabled={cargando || serie.cargando}
+          >
+            <RefreshCcw
+              size={16}
+              className={cargando || serie.cargando ? estilos.girando : undefined}
+            />
+          </IconButton>
+        }
+      />
 
-      {error && <div className="dashboard-error glass-panel">{error}</div>}
+      {error && (
+        <p className={estilos.error} role="alert">
+          <AlertTriangle size={16} aria-hidden="true" /> {error}
+        </p>
+      )}
 
-      <div className="stats-grid">
-        {tarjetas.map((tarjeta) => {
-          const Icono = tarjeta.icono;
-          return (
-            <button
-              key={tarjeta.etiqueta}
-              className={`stat-card glass-panel tono-${tarjeta.tono}`}
-              onClick={() => navigate(tarjeta.destino)}
-            >
-              <span className="stat-icon">
-                <Icono size={20} />
-              </span>
-              <span className="stat-value">
-                {loading ? '—' : (tarjeta.valor ?? 0).toLocaleString()}
-              </span>
-              <span className="stat-label">{tarjeta.etiqueta}</span>
-              <span className="stat-detail">{tarjeta.detalle}</span>
-              <span className="stat-link">
-                Ver detalle <ArrowRight size={13} />
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <section className={estilos.panel} aria-label="Actividad de sincronización">
+        {serie.cargando ? (
+          <div className={estilos.cargando}>Cargando la serie…</div>
+        ) : serie.error ? (
+          <p className={estilos.error} role="alert">
+            <AlertTriangle size={16} aria-hidden="true" /> {serie.error}
+          </p>
+        ) : (
+          <AreaChart
+            plano
+            titulo="Encuestas sincronizadas por día"
+            unidad="encuestas"
+            periodo={rango.periodo}
+            acciones={controles}
+            puntos={puntos}
+          />
+        )}
 
-      <div className="dashboard-sync glass-panel">
-        <span className="sync-icon">
-          <CloudUpload size={20} />
-        </span>
-        <div>
-          <h3>Última sincronización recibida</h3>
-          <p>{loading ? 'Consultando…' : formatearFecha(stats?.ultimaSincronizacion ?? null)}</p>
+        <div className={estilos.tira}>
+          <span className={estilos.tiraTitulo}>Acumulado histórico</span>
+          <div className={estilos.metricas}>
+            {metricas.map((metrica) => {
+              const valor = cargando || error ? '—' : (metrica.valor ?? 0).toLocaleString();
+              return (
+                <button
+                  key={metrica.etiqueta}
+                  type="button"
+                  className={estilos.metrica}
+                  onClick={() => navigate(metrica.destino)}
+                  /* La frase de apoyo ya no ocupa sitio en pantalla, pero sigue
+                     estando para quien navega con lector. */
+                  aria-label={`${metrica.etiqueta}: ${valor}. ${metrica.ayuda}. Ver detalle.`}
+                >
+                  <span className={estilos.metricaValor}>{valor}</span>
+                  <span className={estilos.metricaEtiqueta}>{metrica.etiqueta}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

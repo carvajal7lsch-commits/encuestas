@@ -1,97 +1,139 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ShieldAlert, FileSpreadsheet, Users, FileText, Download, ServerCog, LogOut, LayoutDashboard } from 'lucide-react';
-import './Layout.css';
+import { useEffect, useState } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Users,
+  ClipboardList,
+  Download,
+  LogOut,
+  LayoutDashboard,
+  Menu,
+  X,
+} from 'lucide-react';
+import { IconButton } from './ui';
+import Logo from './ui/Logo';
+import { cerrarSesion, leerUsuario } from '../services/sesion';
+import './ui/panel-theme.css';
+import estilos from './Layout.module.css';
 
 /**
  * El APK se distribuye como asset de un GitHub Release (ver
- * scripts/publicar-apk.ps1). Esta URL siempre apunta a la última publicada.
+ * scripts/publicar-apk.ps1). Esta URL siempre apunta a la ultima publicada.
  */
 const APK_URL =
   'https://github.com/carvajal7lsch-commits/encuestas/releases/latest/download/EncuestasOffline.apk';
 
-interface UsuarioSesion {
-  nombre_completo?: string;
-  nombre?: string;
-  rol?: string;
-}
-
-const leerUsuario = (): UsuarioSesion => {
-  try {
-    return JSON.parse(localStorage.getItem('user') || '{}') as UsuarioSesion;
-  } catch {
-    return {};
-  }
-};
+/**
+ * Tres secciones, no cinco.
+ *
+ * Reportes era una pantalla entera para descargar un CSV: ahora es un boton
+ * dentro de Operacion. Personas y Auditoria Conflictos miraban los mismos
+ * registros desde dos angulos distintos y obligaban a saltar de una a otra
+ * para responder una sola pregunta; son una.
+ */
+const ENLACES = [
+  { a: '/dashboard', icono: LayoutDashboard, texto: 'Resumen' },
+  { a: '/operacion', icono: ClipboardList, texto: 'Operación' },
+  { a: '/usuarios', icono: Users, texto: 'Encuestadores' },
+];
 
 export default function Layout() {
   const navigate = useNavigate();
-  // El backend devuelve nombre_completo; se aceptan ambas formas para no
-  // depender de datos de ejemplo quemados en el código.
-  const user = leerUsuario();
-  const nombre = user.nombre_completo || user.nombre || 'Administrador';
-  const rol = user.rol || 'admin';
+  const location = useLocation();
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
-  const handleLogout = () => {
-    if (window.confirm('¿Está seguro de que desea cerrar la sesión de administración?')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      navigate('/login');
-    }
+  const usuario = leerUsuario();
+  const nombre = usuario.nombre_completo || usuario.nombre || 'Administrador';
+  const rol = usuario.rol || 'admin';
+
+  // Al navegar en movil, el panel lateral debe cerrarse solo.
+  useEffect(() => {
+    setMenuAbierto(false);
+  }, [location.pathname]);
+
+  // El tema del panel solo vive mientras el panel esta montado: el login y la
+  // landing conservan el suyo. Mismo patron que usa LandingPage.
+  useEffect(() => {
+    document.documentElement.classList.add('is-panel');
+    return () => document.documentElement.classList.remove('is-panel');
+  }, []);
+
+  const salir = () => {
+    cerrarSesion();
+    navigate('/login');
   };
 
   return (
-    <div className="layout-container">
-      <aside className="sidebar glass-panel">
-        <div className="sidebar-header" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <ServerCog className="logo-icon" size={28} />
-          <h2 className="logo-text">Encuestas<span>Offline</span></h2>
-        </div>
-        <nav className="sidebar-nav">
-          <NavLink to="/dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <LayoutDashboard size={20} />
-            <span>Resumen</span>
-          </NavLink>
-          <NavLink to="/personas" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <FileText size={20} />
-            <span>Personas</span>
-          </NavLink>
-          <NavLink to="/conflictos" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <ShieldAlert size={20} />
-            <span>Auditoría Conflictos</span>
-          </NavLink>
-          <NavLink to="/reportes" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <FileSpreadsheet size={20} />
-            <span>Reportes</span>
-          </NavLink>
-          <NavLink to="/usuarios" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <Users size={20} />
-            <span>Gestión Usuarios</span>
-          </NavLink>
+    <div className={estilos.contenedor}>
+      <IconButton
+        etiqueta={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
+        className={estilos.hamburguesa}
+        onClick={() => setMenuAbierto((abierto) => !abierto)}
+        aria-expanded={menuAbierto}
+      >
+        {menuAbierto ? <X size={18} /> : <Menu size={18} />}
+      </IconButton>
+
+      {menuAbierto && (
+        <div
+          className={estilos.velo}
+          onClick={() => setMenuAbierto(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside className={`${estilos.barra} ${menuAbierto ? estilos.abierta : ''}`}>
+        <button
+          type="button"
+          className={estilos.marca}
+          onClick={() => navigate('/')}
+          aria-label="Ir a la página de inicio"
+        >
+          <Logo tamano={26} />
+        </button>
+
+        <nav className={estilos.navegacion} aria-label="Secciones del panel">
+          {ENLACES.map(({ a, icono: Icono, texto }) => (
+            <NavLink
+              key={a}
+              to={a}
+              className={({ isActive }) =>
+                `${estilos.enlace} ${isActive ? estilos.activo : ''}`
+              }
+            >
+              <Icono size={17} aria-hidden="true" />
+              <span>{texto}</span>
+            </NavLink>
+          ))}
         </nav>
 
-        <div className="sidebar-footer">
-          <a className="btn-download-apk" href={APK_URL} rel="noopener">
-            <Download size={20} />
+        <div className={estilos.pie}>
+          <a className={estilos.descarga} href={APK_URL} rel="noopener">
+            <Download size={16} aria-hidden="true" />
             <span>Descargar App</span>
           </a>
-          
-          <div className="user-profile-box">
-            <div className="user-profile">
-              <div className="avatar">{nombre.charAt(0).toUpperCase()}</div>
-              <div className="user-details">
-                <span className="user-name" title={nombre}>{nombre}</span>
-                <span className="user-role">{rol}</span>
-              </div>
-            </div>
-            
-            <button className="btn-logout" onClick={handleLogout} title="Cerrar sesión">
-              <LogOut size={18} />
-              <span>Cerrar Sesión</span>
-            </button>
+
+          <div className={estilos.usuario}>
+            <span className={estilos.avatar} aria-hidden="true">
+              {nombre.charAt(0).toUpperCase()}
+            </span>
+            <span className={estilos.datosUsuario}>
+              <span className={estilos.nombre} title={nombre}>{nombre}</span>
+              <span className={estilos.rol}>{rol}</span>
+            </span>
           </div>
+
+          <button
+            type="button"
+            className={estilos.salir}
+            onClick={salir}
+          >
+            <LogOut size={16} aria-hidden="true" />
+            <span>Cerrar Sesión</span>
+          </button>
         </div>
       </aside>
-      <main className="main-content">
+
+      <main className={estilos.contenido}>
         <Outlet />
       </main>
     </div>

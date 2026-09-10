@@ -1,0 +1,183 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--error-border);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--error-bg);
+  color: var(--error-color);
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------------------------
+   El panel unico.
+
+   Antes esto eran tres bloques con marco propio (cuatro tarjetas, la grafica y
+   una tarjeta de fecha), cada uno reclamando su borde y su sombra. Un solo
+   marco baja el ruido a la mitad sin perder ni un dato.
+   --------------------------------------------------------------------------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-5);
+  background: var(--surface-color);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.cargando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  color: var(--text-secondary);
+}
+
+/* ---------- Selector de rango ---------- */
+.rangos {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-color);
+}
+
+.rango {
+  padding: 4px var(--sp-3);
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rango:hover {
+  color: var(--text-primary);
+}
+
+.rangoActivo,
+.rangoActivo:hover {
+  background: var(--surface-color);
+  color: var(--accent-color);
+  box-shadow: var(--shadow-card);
+}
+
+/* ---------------------------------------------------------------------------
+   Fila de acumulados.
+
+   Sustituye a las cuatro tarjetas de color. Los colores de antes (azul, verde,
+   ambar, violeta) no codificaban nada: eran decoracion, y cuatro acentos
+   compitiendo es justo lo que hacia ruido. Aqui las cifras van en tinta de
+   texto y lo unico que las separa son filetes.
+   --------------------------------------------------------------------------- */
+.tira {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--surface-border);
+}
+
+.tiraTitulo {
+  display: block;
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.metricas {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-2);
+}
+
+.metrica {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-left: 1px solid var(--surface-border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-main);
+  transition: background 0.16s ease;
+}
+
+/* El primero abre la fila: sin filete a la izquierda no queda un trazo
+   colgando contra el borde del panel. */
+.metrica:first-child {
+  border-left-color: transparent;
+}
+
+.metrica:hover {
+  background: var(--surface-hover);
+}
+
+.metrica:hover .metricaEtiqueta {
+  color: var(--accent-color);
+}
+
+.metricaValor {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.metricaEtiqueta {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.16s ease;
+}
+
+.girando {
+  animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 720px) {
+  .panel {
+    padding: var(--sp-4);
+  }
+  .metricas {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-3) var(--sp-2);
+  }
+  /* En dos columnas el filete de la izquierda solo tiene sentido en la
+     segunda de cada fila. */
+  .metrica:nth-child(odd) {
+    border-left-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metrica,
+  .metricaEtiqueta {
+    transition: none;
+  }
+  .girando {
+    animation: none;
+  }
+}

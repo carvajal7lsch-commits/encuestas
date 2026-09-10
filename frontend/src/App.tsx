@@ -1,41 +1,48 @@
+import type { ReactNode } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
+import { ToastProvider } from './components/ui'
 import LandingPage from './pages/LandingPage'
 import DashboardPage from './pages/DashboardPage'
-import ConflictosPage from './pages/ConflictosPage'
-import ReportesPage from './pages/ReportesPage'
-import PersonasPage from './pages/PersonasPage'
+import OperacionPage from './pages/OperacionPage'
 import UsuariosPage from './pages/UsuariosPage'
 import LoginPage from './pages/LoginPage'
-import './App.css'
+import { leerToken } from './services/sesion'
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem('token');
-  if (!token) return <Navigate to="/login" replace />;
+const ProtectedRoute = ({ children }: { children: ReactNode }) => {
+  if (!leerToken()) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
 function App() {
   return (
-    <Routes>
-      {/* Landing Page Pública */}
-      <Route path="/" element={<LandingPage />} />
-      
-      {/* Login Administrador */}
-      <Route path="/login" element={<LoginPage />} />
-      
-      {/* Dashboard Administrativo Protegido */}
-      <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/personas" element={<PersonasPage />} />
-        <Route path="/conflictos" element={<ConflictosPage />} />
-        <Route path="/reportes" element={<ReportesPage />} />
-        <Route path="/usuarios" element={<UsuariosPage />} />
-      </Route>
+    // Los avisos viven sobre todo el arbol: cualquier pantalla puede lanzarlos
+    // sin montar su propio contenedor.
+    <ToastProvider>
+      <Routes>
+        {/* Landing pública */}
+        <Route path="/" element={<LandingPage />} />
 
-      {/* Redirección por defecto */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Login de administración */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Panel administrativo protegido */}
+        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/operacion" element={<OperacionPage />} />
+          <Route path="/usuarios" element={<UsuariosPage />} />
+
+          {/* Las rutas viejas siguen resolviendo: un enlace guardado a
+              /personas o /conflictos no debe acabar en la landing. */}
+          <Route path="/personas" element={<Navigate to="/operacion" replace />} />
+          <Route path="/conflictos" element={<Navigate to="/operacion?ver=conflicto" replace />} />
+          <Route path="/reportes" element={<Navigate to="/operacion" replace />} />
+        </Route>
+
+        {/* Redirección por defecto */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </ToastProvider>
   )
 }
 

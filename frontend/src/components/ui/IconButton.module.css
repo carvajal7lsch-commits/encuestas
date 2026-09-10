@@ -1,0 +1,38 @@
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-color);
+  color: var(--text-secondary);
+}
+
+.boton:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--accent-color);
+  border-color: var(--accent-border);
+}
+
+.boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.md {
+  width: var(--control-h);
+  height: var(--control-h);
+}
+
+.sm {
+  width: 28px;
+  height: 28px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.sm:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}

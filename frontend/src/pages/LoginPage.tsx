@@ -1,21 +1,17 @@
-import React, { useState } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ClipboardList,
-  Eye,
-  EyeOff,
-  ShieldCheck,
-  ArrowLeft,
-  KeyRound,
-  WifiOff,
-  GitMerge
-} from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { api } from '../services/api';
-import './LoginPage.css';
+import { guardarSesion } from '../services/sesion';
+import { Modal, Mosaico } from '../components/ui';
+import Logo from '../components/ui/Logo';
+import estilos from './LoginPage.module.css';
 
 /** Administrador de prueba creado por el seed del backend (scripts/seedUsers.ts). */
 const DEMO_USUARIO = 'admin';
-const DEMO_PASSWORD = '123456';
+// No usar una clave incluida en filtraciones conocidas: los navegadores la
+// marcan como comprometida aunque la base de datos la guarde con bcrypt.
+const DEMO_PASSWORD = 'SenaEncuestas_2026!';
 
 export default function LoginPage() {
   const [documento, setDocumento] = useState('');
@@ -24,187 +20,172 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [ayudaAbierta, setAyudaAbierta] = useState(false);
   const navigate = useNavigate();
+  const idCampo = useId();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     try {
       const res = await api.login(documento, password);
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('user', JSON.stringify(res.usuario));
+      // "Recuérdame" ahora decide de verdad: marcado deja la sesión en
+      // localStorage, sin marcar vive solo mientras la pestaña esté abierta.
+      guardarSesion(res.token, res.usuario, rememberMe);
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Credenciales incorrectas o usuario inactivo');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Credenciales incorrectas o usuario inactivo');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="split-login-container">
-      {/* Columna Izquierda: Banner Visual Ilustrativo Geométrico */}
-      <div className="login-visual-side">
-        <div className="visual-pattern-grid">
-          <div className="pattern-tile tile-1">
-            <span className="tile-icon-box">
-              <ClipboardList size={30} />
-            </span>
-            <div className="tile-content">
-              <span className="tile-badge">Captura en campo</span>
-              <p>Encuestas completas aunque no haya una sola barra de señal</p>
-            </div>
-          </div>
-          <div className="pattern-tile tile-2">
-            <span className="tile-icon-box">
-              <WifiOff size={30} />
-            </span>
-            <div className="tile-content">
-              <span className="tile-badge">100% Offline</span>
-              <p>Los datos se guardan cifrados en el dispositivo</p>
-            </div>
-          </div>
-          <div className="pattern-tile tile-3">
-            <span className="tile-icon-box">
-              <GitMerge size={30} />
-            </span>
-            <div className="tile-content">
-              <span className="tile-badge">Smart Merge</span>
-              <p>Fusión campo por campo, sin sobrescribir el trabajo de nadie</p>
-            </div>
-          </div>
-          <div className="pattern-tile tile-4">
-            <span className="tile-icon-box">
-              <ShieldCheck size={30} />
-            </span>
-            <div className="tile-content">
-              <span className="tile-badge">Auditoría</span>
-              <p>Historial inmutable de cada versión sincronizada</p>
-            </div>
-          </div>
+    <div className={estilos.contenedor}>
+      {/* Columna izquierda: el mosaico hace de puente con la landing oscura. */}
+      <div className={estilos.lateral}>
+        <div className={estilos.obra}>
+          <Mosaico />
         </div>
 
-        <div className="visual-side-footer">
-          <h3>Sistema de Encuestas Offline</h3>
-          <p>Plataforma de Auditoría y Administración de Salud en Campo</p>
+        <div className={estilos.pieLateral}>
+          <h2>Encuestas que no dependen de la señal</h2>
+          <p>
+            Captura en campo sin conexión, fusión campo por campo cuando dos versiones
+            chocan y auditoría de cada sincronización.
+          </p>
         </div>
       </div>
 
-      {/* Columna Derecha: Formulario Limpio Blanco (Estilo Zooki / Reference) */}
-      <div className="login-form-side">
-        <div className="login-form-wrapper">
-          {/* Top Brand Logo */}
-          <div className="brand-header-row" onClick={() => navigate('/')}>
-            <div className="brand-logo-icon">
-              <ClipboardList size={22} color="#ffffff" />
-            </div>
-            <span className="brand-logo-text">Encuestas<span>Offline</span></span>
-          </div>
+      {/* Columna derecha: el formulario. */}
+      <div className={estilos.columnaForm}>
+        <div className={estilos.formulario}>
+          <button
+            type="button"
+            className={estilos.marca}
+            onClick={() => navigate('/')}
+            aria-label="Ir a la página de inicio"
+          >
+            <Logo tamano={28} />
+          </button>
 
-          {/* Login Title & Subtitle */}
-          <div className="form-head-title">
+          <div className={estilos.titulo}>
             <h1>Iniciar sesión</h1>
-            <p>¡Bienvenido de vuelta! Accede a tu cuenta para continuar.</p>
+            <p>Panel de administración. Usa la cuenta que te asignó tu supervisor.</p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleLogin} className="split-form">
+          <form onSubmit={handleLogin} className={estilos.campos}>
             {error && (
-              <div className="form-error-alert">
+              <div className={estilos.alerta} role="alert">
                 <span>{error}</span>
               </div>
             )}
 
-            <div className="input-group-custom">
-              <label>E-mail / Documento</label>
-              <input 
-                type="text" 
+            <div className={estilos.campo}>
+              <label htmlFor={`${idCampo}-documento`}>Documento o correo</label>
+              <input
+                id={`${idCampo}-documento`}
+                type="text"
+                autoComplete="username"
                 value={documento}
                 onChange={(e) => setDocumento(e.target.value)}
-                placeholder="Entre con su e-mail / documento"
-                required 
+                placeholder="1001001"
+                required
               />
             </div>
 
-            <div className="input-group-custom">
-              <label>Contraseña</label>
-              <div className="password-input-wrapper">
-                <input 
-                  type={showPassword ? 'text' : 'password'} 
+            <div className={estilos.campo}>
+              <label htmlFor={`${idCampo}-password`}>Contraseña</label>
+              <div className={estilos.campoPassword}>
+                <input
+                  id={`${idCampo}-password`}
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  required 
+                  required
                 />
-                <button 
-                  type="button" 
-                  className="toggle-password-btn" 
+                <button
+                  type="button"
+                  className={estilos.verPassword}
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showPassword}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
             </div>
 
-            <div className="form-options-row">
-              <label className="remember-me-checkbox">
-                <input 
-                  type="checkbox" 
-                  checked={rememberMe} 
-                  onChange={(e) => setRememberMe(e.target.checked)} 
+            <div className={estilos.opciones}>
+              <label className={estilos.recordar}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                 />
                 <span>Recuérdame</span>
               </label>
-              <a 
-                href="#forgot" 
-                className="forgot-password-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert('Para restablecer su contraseña de administrador, contacte a la mesa de soporte técnico.');
-                }}
+              <button
+                type="button"
+                className={estilos.olvide}
+                onClick={() => setAyudaAbierta(true)}
               >
                 ¿Olvidaste tu contraseña?
-              </a>
+              </button>
             </div>
 
-            <button type="submit" className="btn-split-submit" disabled={isLoading}>
-              {isLoading ? 'Verificando...' : 'Entrar'}
+            <button type="submit" className={estilos.enviar} disabled={isLoading}>
+              {isLoading ? 'Verificando…' : 'Entrar'}
             </button>
           </form>
 
-          {/* Credenciales de demostración */}
-          <div className="demo-credentials-box">
-            <span className="demo-credentials-title">
-              <KeyRound size={14} />
-              Acceso de prueba
-            </span>
-            <div className="demo-credentials-row">
-              <span className="demo-credential-item"><strong>Usuario:</strong> <code>admin</code></span>
-              <span className="demo-credential-item"><strong>Contraseña:</strong> <code>123456</code></span>
-            </div>
+          {/* Antes esto era una caja con borde punteado, título propio y su
+              botón: pesaba tanto como el formulario y competía con el CTA.
+              Es una nota de cortesía, así que ocupa una línea. */}
+          <p className={estilos.demo}>
+            <span className={estilos.demoEtiqueta}>Acceso de prueba</span>
+            <code>{DEMO_USUARIO}</code>
+            <span className={estilos.demoSep}>/</span>
+            <code>{DEMO_PASSWORD}</code>
             <button
               type="button"
-              className="demo-credentials-fill"
+              className={estilos.demoUsar}
               onClick={() => {
                 setDocumento(DEMO_USUARIO);
                 setPassword(DEMO_PASSWORD);
                 setError('');
               }}
             >
-              Usar estas credenciales
+              Rellenar
             </button>
-          </div>
+          </p>
 
-          {/* Footer Back Link */}
-          <div className="login-footer-back">
-            <button className="btn-back-landing" onClick={() => navigate('/')}>
-              <ArrowLeft size={16} />
-              <span>Volver a la página de Inicio</span>
+          <div className={estilos.pie}>
+            <button type="button" className={estilos.volver} onClick={() => navigate('/')}>
+              <ArrowLeft size={15} />
+              <span>Volver al inicio</span>
             </button>
           </div>
         </div>
       </div>
+
+      {ayudaAbierta && (
+        <Modal
+          titulo="Recuperar el acceso"
+          onCerrar={() => setAyudaAbierta(false)}
+          ancho="sm"
+        >
+          <p>
+            El restablecimiento de contraseñas de administración no se hace desde esta
+            pantalla. Solicítalo a la mesa de soporte técnico indicando tu número de
+            documento; un supervisor puede reasignarte la contraseña desde{' '}
+            <strong>Encuestadores</strong>.
+          </p>
+        </Modal>
+      )}
     </div>
   );
 }

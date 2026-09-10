@@ -1,0 +1,147 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+/* ---------- Celdas ---------- */
+.celda {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.nombre {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* La propia cuenta se marca: varias acciones estan deshabilitadas sobre ella
+   y sin esta senal el boton apagado no se explica. */
+.tuya {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent-color);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.secundario {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.dispositivo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--text-secondary);
+}
+
+.tenue {
+  color: var(--text-muted);
+}
+
+.acciones {
+  display: inline-flex;
+  gap: var(--sp-1);
+  justify-content: flex-end;
+}
+
+.pista {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* Dos columnas para los pares cortos (rol y dispositivo). */
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+@media (max-width: 520px) {
+  .fila {
+    grid-template-columns: 1fr;
+  }
+}
+
+.campo input:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.girando {
+  animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Formulario del modal ---------- */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.errorFormulario {
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-sm);
+  background: var(--error-bg);
+  color: var(--error-color);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.campo label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.campo input,
+.campo select {
+  height: var(--control-h);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: var(--fs-base);
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.campo input:focus,
+.campo select:focus {
+  border-color: var(--accent-color);
+  background: var(--surface-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .girando { animation: none; }
+}

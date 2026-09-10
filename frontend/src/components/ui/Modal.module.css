@@ -1,0 +1,106 @@
+/* Los nombres tienen scope propio: una pantalla ya no puede redimensionar
+   los modales de las demas. */
+
+.fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  z-index: 50;
+  animation: aparecer 140ms ease-out;
+}
+
+.dialogo {
+  width: 100%;
+  max-height: calc(100vh - var(--sp-8));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-color);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+  animation: subir 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sm { max-width: 420px; }
+.md { max-width: 640px; }
+.lg { max-width: 1080px; }
+
+.cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.titulo {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.descripcion {
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.cerrar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.cerrar:hover {
+  background: var(--surface-hover);
+  border-color: var(--surface-border);
+  color: var(--text-primary);
+}
+
+.cuerpo {
+  padding: var(--sp-5);
+  overflow-y: auto;
+}
+
+.pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  border-top: 1px solid var(--surface-border);
+  background: var(--surface-hover);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+@keyframes aparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes subir {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .fondo { padding: var(--sp-2); align-items: flex-end; }
+  .dialogo { max-height: 92vh; }
+  .cabecera, .cuerpo { padding: var(--sp-4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fondo, .dialogo { animation: none; }
+}

@@ -1,22 +1,69 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
+/* =========================================================================
+   Tokens globales.
+
+   El panel administrativo se apoya en esta escala; la landing tiene su propio
+   sistema (--l-*) en components/landing/landing-theme.css y no depende de aqui.
+   ========================================================================= */
+
 :root {
+  /* Superficies */
   --bg-color: #f4f7f6;
   --surface-color: #ffffff;
   --surface-border: #e2e8f0;
   --surface-hover: #f1f5f9;
+
+  /* Texto */
   --text-primary: #1e293b;
   --text-secondary: #64748b;
-  --accent-color: #2563eb; /* Soft corporate blue */
+  --text-muted: #94a3b8;
+
+  /* Acento */
+  --accent-color: #2563eb;
   --accent-bg: #eff6ff;
   --accent-border: #bfdbfe;
   --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+
+  /* Semanticos */
   --success-color: #059669;
+  --success-bg: #ecfdf5;
   --warning-color: #d97706;
+  --warning-bg: #fffbeb;
   --error-color: #dc2626;
+  --error-bg: #fef2f2;
+  --error-border: #fecaca;
+
+  /* Espaciado: escala de 4px. Antes cada pantalla inventaba sus valores. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* Radios: antes convivian 6, 8, 10, 12, 16 y 24px sin criterio. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+
+  /* Tipografia */
   --font-main: 'Outfit', system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --fs-xs: 11.5px;
+  --fs-sm: 12.5px;
+  --fs-base: 13.5px;
+  --fs-md: 14.5px;
+  --fs-lg: 16px;
+  --fs-title: 22px;
+
+  /* Alto de los controles de una linea (busqueda, botones de icono). */
+  --control-h: 36px;
+
+  /* Sombras */
   --shadow-glow: 0 4px 12px rgba(37, 99, 235, 0.2);
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-modal: 0 20px 45px -12px rgba(15, 23, 42, 0.28);
 }
 
 * {
@@ -29,7 +76,8 @@ body {
   background-color: var(--bg-color);
   color: var(--text-primary);
   font-family: var(--font-main);
-  line-height: 1.6;
+  font-size: var(--fs-base);
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
@@ -39,44 +87,34 @@ body {
   display: flex;
 }
 
-.glass-panel {
-  background: var(--surface-color);
-  border: 1px solid var(--surface-border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-card);
-}
-
 h1, h2, h3, h4 {
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
 button {
   font-family: var(--font-main);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
-.btn-primary {
-  background: var(--accent-gradient);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  box-shadow: var(--shadow-glow);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+/* Anillo de foco visible y uniforme: el panel no tenia ninguno. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+.glass-panel {
+  background: var(--surface-color);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
 }
 
-/* Custom Scrollbar */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

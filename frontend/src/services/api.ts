@@ -1,7 +1,9 @@
+import { cerrarSesion, leerToken } from './sesion';
+
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const getHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = leerToken();
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -10,12 +12,11 @@ const getHeaders = () => {
 
 /**
  * Con el token vencido, todas las pantallas fallaban con un error genérico y el
- * panel quedaba inservible hasta limpiar el localStorage a mano. Ahora una 401
+ * panel quedaba inservible hasta limpiar el almacenamiento a mano. Ahora una 401
  * cierra la sesión y devuelve al login.
  */
 const cerrarSesionPorTokenVencido = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+  cerrarSesion();
   if (window.location.pathname !== '/login') {
     window.location.href = '/login';
   }
@@ -61,6 +62,11 @@ export const api = {
     return res.json();
   },
 
+  getSeries: async (dias: number) => {
+    const res = await pedir(`/admin/series?dias=${dias}`, {}, 'Error al obtener la serie diaria');
+    return res.json();
+  },
+
   getPersonas: async () => {
     const res = await pedir('/admin/personas', {}, 'Error al obtener personas');
     return res.json();
@@ -89,11 +95,44 @@ export const api = {
     return res.json();
   },
 
+  /** Edicion de la ficha. La contrasena tiene su propio endpoint. */
+  updateUsuario: async (id: number, userData: unknown) => {
+    const res = await pedir(
+      `/admin/usuarios/${id}`,
+      { method: 'PUT', body: JSON.stringify(userData) },
+      'Error al actualizar el usuario'
+    );
+    return res.json();
+  },
+
   toggleUsuario: async (id: number) => {
     const res = await pedir(
       `/admin/usuarios/${id}/toggle`,
       { method: 'PUT' },
       'Error al cambiar estado del usuario'
+    );
+    return res.json();
+  },
+
+  resetPasswordUsuario: async (id: number, password: string) => {
+    const res = await pedir(
+      `/admin/usuarios/${id}/password`,
+      { method: 'PUT', body: JSON.stringify({ password }) },
+      'Error al reasignar la contrasena'
+    );
+    return res.json();
+  },
+
+  /**
+   * Baja definitiva. El servidor la rechaza con 409 si la cuenta firma
+   * encuestas del historial, porque esa tabla es inmutable y perderia la
+   * autoria; en ese caso el mensaje pide desactivar en su lugar.
+   */
+  deleteUsuario: async (id: number) => {
+    const res = await pedir(
+      `/admin/usuarios/${id}`,
+      { method: 'DELETE' },
+      'Error al eliminar el usuario'
     );
     return res.json();
   },

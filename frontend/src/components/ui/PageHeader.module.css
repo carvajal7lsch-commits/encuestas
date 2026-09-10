@@ -1,0 +1,44 @@
+.cabecera {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  /* flex-wrap: el header antes desbordaba en pantallas estrechas. */
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.textos {
+  min-width: 0;
+}
+
+.titulo {
+  /* Antes 32px. El titulo dominaba la pantalla sin aportar informacion. */
+  font-size: var(--fs-title);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.subtitulo {
+  margin-top: 2px;
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+}
+
+.acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+@media (max-width: 720px) {
+  .cabecera {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .acciones {
+    justify-content: flex-start;
+  }
+}

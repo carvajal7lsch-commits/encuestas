@@ -1,0 +1,224 @@
+.contenedor {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* ---------- Barra lateral ---------- */
+.barra {
+  /* Antes 280px + 16px de margen: en un movil de 360px ocupaba el 87%. */
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--surface-solid, var(--surface-color));
+  border-right: 1px solid var(--surface-border);
+  z-index: 30;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-5) var(--sp-4);
+  border: none;
+  border-bottom: 1px solid var(--surface-border);
+  background: transparent;
+  text-align: left;
+}
+
+.navegacion {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-2);
+  overflow-y: auto;
+}
+
+.enlace {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: var(--fs-base);
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.enlace:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.activo,
+.activo:hover {
+  background: var(--accent-bg);
+  border-left: 2px solid var(--accent-color);
+  padding-left: calc(var(--sp-3) - 2px);
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* ---------- Pie de la barra ---------- */
+.pie {
+  padding: var(--sp-3);
+  border-top: 1px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.descarga {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: var(--control-h);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  background: var(--accent-bg);
+  color: var(--accent-color);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.descarga:hover {
+  background: var(--accent-color);
+  border-color: transparent;
+  color: var(--sobre-acento, #ffffff);
+}
+
+.usuario {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid var(--accent-border);
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent-color);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+}
+
+.datosUsuario {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nombre {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rol {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+.salir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: 32px;
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-sm);
+  background: var(--error-bg);
+  color: var(--error-color);
+  font-family: var(--font-main);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.salir:hover {
+  background: var(--error-color);
+  border-color: transparent;
+  color: var(--sobre-error, #ffffff);
+}
+
+/* ---------- Contenido ---------- */
+.contenido {
+  flex: 1;
+  /* min-width:0 es lo que hace que una tabla ancha active su propio scroll en
+     vez de estirar este flex item y desbordar la pagina entera. */
+  min-width: 0;
+  padding: var(--sp-5);
+}
+
+/* ---------- Movil ---------- */
+.hamburguesa {
+  display: none;
+  position: fixed;
+  top: var(--sp-3);
+  left: var(--sp-3);
+  z-index: 45;
+  box-shadow: var(--shadow-card);
+}
+
+.velo {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .hamburguesa {
+    display: inline-flex;
+  }
+
+  .velo {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 35;
+  }
+
+  .barra {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: var(--shadow-modal);
+    z-index: 40;
+  }
+
+  .abierta {
+    transform: none;
+  }
+
+  .contenido {
+    padding: calc(var(--control-h) + var(--sp-5)) var(--sp-4) var(--sp-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barra {
+    transition: none;
+  }
+}
