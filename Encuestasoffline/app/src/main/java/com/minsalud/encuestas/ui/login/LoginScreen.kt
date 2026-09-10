@@ -2,13 +2,13 @@ package com.minsalud.encuestas.ui.login
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AssignmentInd
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.VpnKey
@@ -24,7 +24,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
+import com.minsalud.encuestas.R
 import com.minsalud.encuestas.worker.SyncScheduler
 import kotlinx.coroutines.launch
 
@@ -88,13 +90,12 @@ fun LoginScreen(
                     shape = CircleShape,
                     modifier = Modifier.padding(bottom = 12.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.AssignmentInd,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier
-                            .size(64.dp)
-                            .padding(14.dp)
+                    // Marca unica del producto, la misma del icono de la app y
+                    // de la web (ver frontend/src/components/ui/Logo.tsx).
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        contentDescription = "EncuestasOffline",
+                        modifier = Modifier.size(72.dp)
                     )
                 }
 

@@ -1,0 +1,229 @@
+.figura {
+  margin: 0;
+  padding: var(--sp-4);
+  background: var(--surface-color);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+}
+
+/* Sin marco: la grafica se anida en un panel que ya lo pone. */
+.plano {
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.identidad {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.titulo {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+/* El numero es tinta de texto, no del color de la serie. Es la cifra
+   protagonista de la pantalla, asi que manda en tamano sobre todo lo demas. */
+.total {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.total span {
+  font-size: var(--fs-base);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+}
+
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+.lienzo {
+  position: relative;
+  padding-left: 30px;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 200px;
+  overflow: visible;
+}
+
+.rejilla {
+  stroke: var(--chart-grid, rgba(15, 23, 42, 0.08));
+  stroke-width: 1;
+}
+
+.linea {
+  fill: none;
+  stroke: var(--chart-mark, #3b82f6);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* La linea no debe engordar al deformarse el viewBox. */
+  vector-effect: non-scaling-stroke;
+}
+
+.crosshair {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Anillo del color de la superficie: separa el marcador del area de debajo. */
+.marcadorAnillo {
+  fill: var(--surface-solid, var(--surface-color, #ffffff));
+}
+
+.marcador {
+  fill: var(--chart-mark, #3b82f6);
+}
+
+.ejeY {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 200px;
+  width: 28px;
+}
+
+.ejeY span {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.ejeX {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--sp-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.tooltip {
+  position: absolute;
+  top: -4px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid, #ffffff);
+  box-shadow: var(--shadow-modal);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.tooltipFecha {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+.tooltipValor {
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Vive dentro de la figura, asi que no lleva marco propio: solo ocupa el
+   hueco del lienzo para que la cabecera no se descuelgue. */
+.vacio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  border: 1px dashed var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+/* ---------- Vista de tabla ---------- */
+/* Sin filete propio: el panel que la contiene ya separa con uno, y dos reglas
+   a 40px de distancia son ruido. */
+.tabla {
+  margin-top: var(--sp-3);
+}
+
+.tabla summary {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.tabla summary:hover {
+  color: var(--text-primary);
+}
+
+.tablaCaja {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: var(--sp-2);
+}
+
+.tablaCaja table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.tablaCaja caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.tablaCaja th,
+.tablaCaja td {
+  padding: 5px var(--sp-2);
+  border-bottom: 1px solid var(--surface-border);
+  text-align: left;
+}
+
+.tablaCaja th {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.tablaCaja td:last-child {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}

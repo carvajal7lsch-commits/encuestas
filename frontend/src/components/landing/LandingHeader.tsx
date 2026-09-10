@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Lock, Menu, X } from 'lucide-react';
+import { Lock, Menu, X } from 'lucide-react';
+import Logo from '../ui/Logo';
 import './LandingHeader.css';
 
 const NAV_LINKS = [
@@ -58,7 +59,7 @@ const LandingHeader: React.FC = () => {
           onKeyDown={(e) => e.key === 'Enter' && navigate('/')}
         >
           <span className="brand-icon">
-            <ClipboardList size={19} strokeWidth={2.2} />
+            <Logo tamano={22} soloMarca />
           </span>
           <span className="brand-text-box">
             <span className="brand-title">

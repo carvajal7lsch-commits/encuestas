@@ -1,0 +1,134 @@
+/* =========================================================================
+   Tema del panel administrativo: blancos y azules.
+
+   No es el gris plano de la version anterior. Los neutros llevan un tinte azul
+   para que emparenten con el acento, la profundidad la dan sombras suaves por
+   capas en vez de bordes duros de 1px, y el fondo tiene una textura muy leve
+   que evita el efecto de folio en blanco.
+
+   Se aplica sobre <html> mientras el panel esta montado, igual que hace
+   LandingPage con .is-dark-landing, para no arrastrar el resto del sitio.
+
+   Se sobrescriben los MISMOS nombres de token que define index.css: cada
+   modulo de estilo del panel ya los consume, asi que el cambio de tema no
+   obliga a tocar sus reglas.
+   ========================================================================= */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
+
+html.is-panel {
+  color-scheme: light;
+
+  /* Superficies: blanco sobre un fondo azulado muy claro, no gris. */
+  --bg-color: #f4f7fd;
+  --surface-color: #ffffff;
+  --surface-solid: #ffffff;
+  --surface-border: #e4eaf6;
+  --surface-hover: #f2f6fd;
+
+  /* Texto: azulado en toda la escala, no negro puro. */
+  --text-primary: #0f1c33;
+  --text-secondary: #56688a;
+  --text-muted: #93a3bd;
+
+  /* Acento */
+  --accent-color: #2563eb;
+  --accent-soft: #1d4ed8;
+  --accent-bg: #eef4ff;
+  --accent-border: #cfe0ff;
+  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  --cian: #0891b2;
+
+  /* Semanticos. El conjunto azul/verde/ambar/violeta/rojo pasa las cinco
+     comprobaciones del validador sobre blanco; el par ambar-verde queda en la
+     banda 6-8 de CVD, legal porque cada badge lleva ademas su etiqueta. */
+  --success-color: #059669;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --success-texto: #065f46;
+  --warning-color: #d97706;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-texto: #92400e;
+  --error-color: #dc2626;
+  --error-bg: #fef2f2;
+  --error-border: #fecaca;
+  --error-texto: #991b1b;
+  --violeta-color: #7c3aed;
+  --violeta-bg: #f5f3ff;
+  --violeta-border: #ddd6fe;
+
+  /* Marca de grafica: #2563eb cae dentro de la banda de luminosidad de modo
+     claro (0.43-0.77) y supera 3:1 sobre blanco. */
+  --chart-mark: #2563eb;
+  --chart-mark-soft: rgba(37, 99, 235, 0.16);
+  --chart-grid: #eaeff8;
+
+  /* Tinta sobre superficies de color solido. */
+  --sobre-acento: #ffffff;
+  --sobre-error: #ffffff;
+
+  /* Bloques de codigo: claros, para no romper el conjunto con un rectangulo
+     negro en medio de la pantalla. */
+  --codigo-bg: #f7f9fd;
+  --codigo-texto: #1e293b;
+
+  /* Profundidad por capas: dos sombras suaves en vez de un borde duro. */
+  --shadow-card: 0 1px 2px rgba(15, 28, 51, 0.04), 0 4px 12px -6px rgba(15, 28, 51, 0.09);
+  --shadow-modal: 0 24px 60px -20px rgba(15, 28, 51, 0.3);
+
+  --logo-primario: #2563eb;
+  --logo-secundario: #0891b2;
+  --logo-texto: #0f1c33;
+
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html.is-panel body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+}
+
+/* Textura muy tenue: quita el efecto de folio en blanco sin llamar la
+   atencion. Fija, para no moverse con el scroll del contenido. */
+html.is-panel body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.028) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(120% 100% at 20% 0%, #000 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(120% 100% at 20% 0%, #000 0%, transparent 72%);
+}
+
+/* Halo azul frio en la esquina superior, el mismo recurso de la landing pero
+   en clave clara. */
+html.is-panel body::after {
+  content: '';
+  position: fixed;
+  top: -260px;
+  left: 10%;
+  width: 680px;
+  height: 680px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.09) 0%, transparent 68%);
+  filter: blur(28px);
+}
+
+html.is-panel #root {
+  position: relative;
+  z-index: 1;
+}
+
+html.is-panel ::-webkit-scrollbar-thumb {
+  background: #c9d6ea;
+}
+
+html.is-panel ::-webkit-scrollbar-thumb:hover {
+  background: #a9bcd8;
+}

@@ -1,0 +1,49 @@
+.contenedor {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.simbolo {
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Los trazos toman el color del contexto, así el mismo símbolo sirve sobre
+   fondo claro y sobre fondo oscuro sin duplicar el dibujo. */
+.cuaderno,
+.lomo {
+  stroke: var(--logo-primario, #4d8dff);
+  fill: none;
+}
+
+.notas,
+.check {
+  stroke: var(--logo-secundario, #2bd7ee);
+  fill: none;
+}
+
+
+.placa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 10px;
+  background: var(--logo-placa, rgba(77, 141, 255, 0.12));
+  border: 1px solid var(--logo-placa-borde, rgba(77, 141, 255, 0.26));
+}
+
+.nombre {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--logo-texto, var(--text-primary));
+  white-space: nowrap;
+}
+
+.nombreAcento {
+  font-weight: 300;
+  color: var(--logo-primario, #4d8dff);
+}

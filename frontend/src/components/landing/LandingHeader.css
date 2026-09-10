@@ -56,9 +56,10 @@
   height: 38px;
   flex-shrink: 0;
   border-radius: 12px;
-  color: #ffffff;
-  background: linear-gradient(140deg, #4d8dff 0%, #1d4ed8 100%);
-  box-shadow: 0 8px 20px -8px rgba(77, 141, 255, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  /* La marca lleva sus propios colores, asi que la placa pasa a ser un fondo
+     de vidrio en vez del degradado azul solido que tapaba el simbolo. */
+  background: rgba(77, 141, 255, 0.1);
+  border: 1px solid rgba(77, 141, 255, 0.24);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

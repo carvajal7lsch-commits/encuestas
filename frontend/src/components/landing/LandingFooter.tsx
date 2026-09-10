@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
+import Logo from '../ui/Logo';
 import './LandingFooter.css';
 
 interface LandingFooterProps {
@@ -26,7 +27,7 @@ const LandingFooter: React.FC<LandingFooterProps> = ({ onDownloadApk }) => {
           <div className="footer-brand">
             <span className="footer-brand-row">
               <span className="brand-icon">
-                <ClipboardList size={18} strokeWidth={2.2} />
+                <Logo tamano={20} soloMarca />
               </span>
               <span className="brand-title">
                 Encuestas<span className="brand-title-alt">Offline</span>
