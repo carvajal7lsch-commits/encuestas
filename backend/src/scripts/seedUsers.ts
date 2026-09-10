@@ -12,26 +12,26 @@ async function runSeed() {
   try {
     // Check if admin exists
     const res = await client.query('SELECT * FROM usuarios WHERE numero_documento = $1', ['admin']);
-    const passwordHash = await bcrypt.hash('123456', 10);
+    const passwordHash = await bcrypt.hash('SenaEncuestas_2026!', 10);
     if (res.rows.length > 0) {
       await client.query('UPDATE usuarios SET password_hash = $1 WHERE numero_documento = $2', [passwordHash, 'admin']);
-      console.log('El usuario admin ya existe. Contraseña actualizada forzosamente a: 123456');
+      console.log('El usuario admin ya existe. Contraseña actualizada forzosamente.');
     } else {
       await client.query(
         `INSERT INTO usuarios (numero_documento, nombre_completo, password_hash, rol, activo)
          VALUES ($1, $2, $3, $4, true)`,
-        ['admin', 'Super Administrador', passwordHash, 'supervisor']
+        ['admin', 'Super Administrador', passwordHash, 'admin']
       );
       console.log('✅ Usuario admin creado con éxito.');
       console.log('Credenciales de acceso:');
       console.log('Documento: admin');
-      console.log('Password:  123456');
+      console.log('Password:  SenaEncuestas_2026!');
     }
     
     // Check if test encuestador exists
     const res2 = await client.query('SELECT * FROM usuarios WHERE numero_documento = $1', ['998877']);
     if (res2.rows.length === 0) {
-      const passwordHash = await bcrypt.hash('123456', 10);
+      const passwordHash = await bcrypt.hash('SenaEncuestas_2026!', 10);
       await client.query(
         `INSERT INTO usuarios (numero_documento, nombre_completo, password_hash, rol, activo)
          VALUES ($1, $2, $3, $4, true)`,

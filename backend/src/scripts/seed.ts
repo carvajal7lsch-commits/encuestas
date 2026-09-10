@@ -5,7 +5,7 @@ async function seed() {
   console.log('Iniciando seed de base de datos...');
   
   try {
-    const passwordHash = await bcrypt.hash('123456', 10);
+    const passwordHash = await bcrypt.hash('SenaEncuestas_2026!', 10);
     
     const query = `
       INSERT INTO usuarios (numero_documento, nombre_completo, email, password_hash, rol, activo)

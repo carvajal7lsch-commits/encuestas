@@ -197,13 +197,13 @@ ON CONFLICT (codigo) DO UPDATE SET
     nombre = EXCLUDED.nombre,
     departamento = EXCLUDED.departamento;
 
--- 2. USUARIOS (Password Hash para '123456')
+-- 2. USUARIOS (Password Hash para la credencial demo 'SenaEncuestas_2026!')
 INSERT INTO usuarios (numero_documento, nombre_completo, email, password_hash, rol, dispositivo_id, activo) VALUES
-    ('admin', 'Super Administrador', 'admin@encuestasoffline.gov.co', '$2b$10$8XaVT//NFT3dfqLe2qZc1Ox480pn7gUXbsoOdkqenS0UaHbAKNw.e', 'admin', NULL, TRUE),
-    ('1001001', 'Jorge Ramírez', 'jorge@encuestasoffline.gov.co', '$2b$10$8XaVT//NFT3dfqLe2qZc1Ox480pn7gUXbsoOdkqenS0UaHbAKNw.e', 'encuestador', 'ANDROID-JORGE-01', TRUE),
-    ('1001002', 'María Pérez', 'maria@encuestasoffline.gov.co', '$2b$10$8XaVT//NFT3dfqLe2qZc1Ox480pn7gUXbsoOdkqenS0UaHbAKNw.e', 'encuestador', 'ANDROID-MARIA-02', TRUE),
-    ('1001003', 'Ana Silvia Gómez', 'ana.supervisor@encuestasoffline.gov.co', '$2b$10$8XaVT//NFT3dfqLe2qZc1Ox480pn7gUXbsoOdkqenS0UaHbAKNw.e', 'supervisor', NULL, TRUE),
-    ('998877', 'Encuestador de Prueba', 'prueba@encuestasoffline.gov.co', '$2b$10$8XaVT//NFT3dfqLe2qZc1Ox480pn7gUXbsoOdkqenS0UaHbAKNw.e', 'encuestador', 'ANDROID-TEST-99', TRUE)
+    ('admin', 'Super Administrador', 'admin@encuestasoffline.gov.co', '$2b$10$Kx6ww2NW6gQcztQxW5T9S.jkrf8XXp52gBvyijyeodcLkRFJtTQdq', 'admin', NULL, TRUE),
+    ('1001001', 'Jorge Ramírez', 'jorge@encuestasoffline.gov.co', '$2b$10$Kx6ww2NW6gQcztQxW5T9S.jkrf8XXp52gBvyijyeodcLkRFJtTQdq', 'encuestador', 'ANDROID-JORGE-01', TRUE),
+    ('1001002', 'María Pérez', 'maria@encuestasoffline.gov.co', '$2b$10$Kx6ww2NW6gQcztQxW5T9S.jkrf8XXp52gBvyijyeodcLkRFJtTQdq', 'encuestador', 'ANDROID-MARIA-02', TRUE),
+    ('1001003', 'Ana Silvia Gómez', 'ana.supervisor@encuestasoffline.gov.co', '$2b$10$Kx6ww2NW6gQcztQxW5T9S.jkrf8XXp52gBvyijyeodcLkRFJtTQdq', 'supervisor', NULL, TRUE),
+    ('998877', 'Encuestador de Prueba', 'prueba@encuestasoffline.gov.co', '$2b$10$Kx6ww2NW6gQcztQxW5T9S.jkrf8XXp52gBvyijyeodcLkRFJtTQdq', 'encuestador', 'ANDROID-TEST-99', TRUE)
 ON CONFLICT (numero_documento) DO UPDATE SET
     nombre_completo = EXCLUDED.nombre_completo,
     email = EXCLUDED.email,
