@@ -1,0 +1,459 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  /* La pagina ocupa el alto disponible para que el detalle pueda tener su
+     propio scroll en vez de alargar la pagina entera. */
+  min-height: 0;
+}
+
+/* ---------- Filtros ---------- */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.filtro {
+  padding: 5px var(--sp-3);
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  background: var(--surface-color);
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.filtro:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-border);
+}
+
+.filtroActivo,
+.filtroActivo:hover {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--sobre-acento, #ffffff);
+}
+
+.fecha,
+.limpiar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-color);
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.fecha input {
+  min-width: 118px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.limpiar {
+  cursor: pointer;
+}
+
+.limpiar:hover {
+  color: var(--accent-color);
+  border-color: var(--accent-border);
+}
+
+/* ---------------------------------------------------------------------------
+   Maestro-detalle.
+
+   Antes la lista y el conflicto vivian en pantallas distintas y el detalle de
+   una persona se abria en un modal que tapaba la lista. Aqui conviven: la fila
+   abierta queda marcada a la izquierda y su historial se lee a la derecha.
+   --------------------------------------------------------------------------- */
+.division {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4);
+  align-items: start;
+  min-height: 0;
+}
+
+.conDetalle {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+.lista {
+  min-width: 0;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-1) 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.controlesPagina {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.controlesPagina button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 30px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-color);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.controlesPagina button:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  color: var(--accent-color);
+}
+
+.controlesPagina button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.numeroPagina {
+  min-width: 40px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.detalle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  background: var(--surface-color);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  /* Se queda a la vista mientras se recorre una lista larga. */
+  position: sticky;
+  top: var(--sp-4);
+  max-height: calc(100vh - var(--sp-8));
+  overflow-y: auto;
+}
+
+.detalleCabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.detalleTitulo {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.detalleSub {
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.aviso {
+  color: var(--text-secondary);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--error-border);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--error-bg);
+  color: var(--error-color);
+}
+
+/* ---------- Ficha ---------- */
+.ficha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--sp-3);
+}
+
+.fichaItem dt {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.fichaItem dd {
+  margin-top: 1px;
+  font-size: var(--fs-base);
+  color: var(--text-primary);
+}
+
+.seccion {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent-color);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------------------
+   Linea de tiempo de capturas.
+   --------------------------------------------------------------------------- */
+.linea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--sp-5);
+}
+
+.hito {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* El hilo que une las capturas: se dibuja desde la marca hacia abajo y el
+   ultimo hito no lo pinta, para que no quede un rabo suelto. */
+.hito::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--sp-5) * -1 + 4px);
+  top: 14px;
+  bottom: calc(var(--sp-4) * -1);
+  width: 1px;
+  background: var(--surface-border);
+}
+
+.hito:last-child::before {
+  display: none;
+}
+
+.marca {
+  position: absolute;
+  left: calc(var(--sp-5) * -1);
+  top: 5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--surface-color);
+  border: 2px solid var(--accent-color);
+}
+
+.marcaConflicto {
+  border-color: var(--warning-color);
+  background: var(--warning-color);
+}
+
+.hitoCabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.hitoVersion {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hitoFecha {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.hitoAutor {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+/* ---------- Datos capturados ---------- */
+.datos summary {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.datos summary:hover {
+  color: var(--text-primary);
+}
+
+.datosLista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--sp-2) var(--sp-3);
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-color);
+}
+
+.datosLista dt {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.datosLista dd {
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Celdas de la tabla ---------- */
+.celdaPersona {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.documento {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.celdaEstado {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.versiones {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tenue {
+  color: var(--text-muted);
+  /* "Sin registrar" partia en dos lineas dentro de la columna de municipio. */
+  white-space: nowrap;
+}
+
+.girando {
+  animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  /* Con poco ancho, dos columnas dejarian la tabla ilegible: el detalle pasa
+     debajo y deja de ser pegajoso. */
+  .conDetalle {
+    grid-template-columns: 1fr;
+  }
+  .detalle {
+    position: static;
+    max-height: none;
+    /* El boton de menu va fijo en la esquina: sin este margen, al traer el
+       panel a pantalla el titulo queda justo debajo y no se lee. */
+    scroll-margin-top: 64px;
+  }
+}
+
+@media (max-width: 620px) {
+  .fecha:first-of-type {
+    margin-left: 0;
+  }
+
+  .fecha {
+    flex: 1;
+  }
+
+  .fecha input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .paginacion {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .girando { animation: none; }
+}
+
+/* Separa los filtros de contenido (que se mira) de los de fecha (cuando se
+   capturo): dos preguntas distintas en la misma barra. */
+.separador {
+  width: 1px;
+  align-self: stretch;
+  margin: 0 var(--sp-1);
+  background: var(--surface-border);
+}
+
+.fechas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: calc(var(--sp-3) * -1);
+}

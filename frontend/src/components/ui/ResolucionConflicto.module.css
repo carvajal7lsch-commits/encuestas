@@ -1,0 +1,122 @@
+.caja {
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  background: var(--warning-bg);
+  overflow: hidden;
+}
+
+.encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--warning-border);
+}
+
+.titulo {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--warning-texto, #92400e);
+}
+
+.autor {
+  font-size: var(--fs-xs);
+  color: var(--warning-texto, #92400e);
+  opacity: 0.85;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  background: var(--surface-color);
+}
+
+.tabla th,
+.tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.tabla tbody tr:last-child th,
+.tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla thead th {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg-color);
+}
+
+.campo {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.valor {
+  color: var(--text-secondary);
+}
+
+/* El que gana no se marca solo con color: lleva ademas peso y la columna
+   "Quedo" lo nombra con palabras. */
+.ganador {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.vacio {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.veredicto {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.regla {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .tabla thead {
+    display: none;
+  }
+  .tabla tbody tr {
+    display: block;
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid var(--surface-border);
+  }
+  .tabla th,
+  .tabla td {
+    display: block;
+    border: none;
+    padding: 2px var(--sp-3);
+  }
+  /* Sin encabezados de columna hace falta decir que es cada linea. */
+  .tabla td::before {
+    display: block;
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  .tabla td:nth-of-type(1)::before { content: 'En el servidor'; }
+  .tabla td:nth-of-type(2)::before { content: 'Llegó del celular'; }
+  .tabla td:nth-of-type(3)::before { content: 'Quedó'; }
+}

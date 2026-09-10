@@ -1,0 +1,46 @@
+.mosaico {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 100%;
+  /* Las celdas son cuadradas, así que el conjunto también. */
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md, 12px);
+  overflow: hidden;
+  /* El tono mas oscuro de la paleta, por detras: sin el, el redondeo por
+     subpixel deja asomar rayas del fondo de la pagina entre celda y celda. */
+  background: #070c17;
+}
+
+.celda {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+}
+
+/* La geometría llena la celda: los cuartos de disco y las diagonales están
+   dibujados para llegar al borde. */
+.forma {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Los pictogramas de la librería sí respiran dentro de su cuadro. El trazo se
+   afina: al tamaño de una celda, el grosor por defecto los emborrona. */
+.icono {
+  width: 46%;
+  height: auto;
+  stroke-width: 1.5;
+}
+
+.marca {
+  display: inline-flex;
+  width: 52%;
+}
+
+.marca svg {
+  width: 100%;
+  height: auto;
+}
