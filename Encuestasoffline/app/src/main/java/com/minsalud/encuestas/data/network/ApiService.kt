@@ -4,6 +4,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Url
 
 interface ApiService {
@@ -15,6 +16,17 @@ interface ApiService {
     // Endpoint de sincronización (Phase 4)
     @POST("sync/encuestas")
     suspend fun syncEncuesta(@Body payload: SyncPayload): Response<SyncResponse>
+
+    /**
+     * Consulta una persona ya registrada en el servidor, antes de capturarla.
+     *
+     * Sin esto el formulario solo miraba la base local del propio teléfono, así
+     * que una persona encuestada por un compañero desde otro celular era
+     * desconocida: se enviaba version_anterior_id nulo y el Smart Merge del
+     * servidor no llegaba a ejecutarse nunca entre dispositivos distintos.
+     */
+    @GET("sync/personas/{documento}")
+    suspend fun buscarPersona(@Path("documento") documento: String): Response<BusquedaPersona>
 
     /**
      * Manifiesto de la última versión publicada. Se pide con @Url absoluta porque
@@ -44,6 +56,34 @@ data class SyncResponse(
     val message: String, 
     val id_encuesta: String,
     val datos_resultado: Any? // Puede venir el JSON fusionado en caso de 409
+)
+
+/** Respuesta de la consulta previa de una persona. */
+data class BusquedaPersona(
+    val encontrada: Boolean = false,
+    val persona: PersonaRemota? = null,
+    val ultimaVersion: VersionRemota? = null
+)
+
+data class PersonaRemota(
+    val numero_documento: String,
+    val nombres: String?,
+    val apellidos: String?,
+    val telefono: String?,
+    val eps: String?,
+    val municipio: String?
+)
+
+data class VersionRemota(
+    /**
+     * Id de la versión vigente en el servidor en el momento de consultar. Se
+     * reenvía al sincronizar: si para entonces ya no es la última, el servidor
+     * sabe que la captura se hizo sobre datos viejos y aplica el Smart Merge.
+     */
+    val id_encuesta: String,
+    val datos_recolectados: Map<String, Any?>?,
+    val fecha_encuesta: String?,
+    val encuestador: String?
 )
 
 /** Contenido de app-version.json publicado junto al APK. */

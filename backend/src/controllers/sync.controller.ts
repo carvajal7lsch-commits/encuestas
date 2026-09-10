@@ -158,3 +158,77 @@ export const syncEncuesta = async (req: Request, res: Response): Promise<void> =
         client.release();
     }
 };
+
+/**
+ * Consulta puntual de una persona por documento, para la app de campo.
+ *
+ * Sin esto, el Smart Merge no se disparaba nunca entre celulares distintos. El
+ * formulario resolvia la version anterior contra la base Room del propio
+ * telefono (FormScreen: repo.getLatestHistorial), asi que si Jorge encuestaba a
+ * alguien y despues le tocaba a Maria desde otro celular, el suyo no conocia
+ * esa captura y enviaba version_anterior_id = null. La condicion de conflicto
+ * de syncEncuesta empieza por ese campo, de modo que con null no entraba: la
+ * captura de Maria se guardaba como version nueva sin fusionar, y los campos
+ * que ella dejara vacios quedaban vacios aunque Jorge los tuviera llenos.
+ *
+ * Devolviendo el id_encuesta vigente en el servidor se consigue ademas control
+ * de concurrencia optimista: la app lo reenvia al sincronizar y, si mientras
+ * tanto alguien mas sincronizo esa persona, deja de coincidir con la ultima y
+ * el Smart Merge entra, que es justo para lo que se escribio.
+ *
+ * Devuelve una sola persona, nunca un listado: un celular de campo no tiene por
+ * que llevar encima el censo entero.
+ */
+export const buscarPersona = async (req: Request, res: Response): Promise<void> => {
+    // req.params llega tipado como string | string[]; el parametro de ruta es
+    // uno solo, pero conviene normalizarlo antes de usarlo.
+    const documento = String(req.params.documento ?? '').trim();
+
+    if (documento.length === 0) {
+        res.status(400).json({ error: 'Falta el numero de documento' });
+        return;
+    }
+
+    const client = await pool.connect();
+    try {
+        const persona = await client.query(
+            `SELECT p.numero_documento, p.tipo_documento, p.nombres, p.apellidos,
+                    p.telefono, p.email, p.direccion, p.eps, p.ocupacion, p.estrato,
+                    p.municipio_codigo, m.nombre AS municipio
+             FROM personas p
+             LEFT JOIN municipios m ON m.codigo = p.municipio_codigo
+             WHERE p.numero_documento = $1`,
+            [documento]
+        );
+
+        // Que no exista es una respuesta normal a "esta ya registrada?", no un
+        // error: con 404 la app tendria que distinguir un fallo de red de un
+        // documento nuevo, que es el caso mas comun en campo.
+        if (persona.rowCount === 0) {
+            res.status(200).json({ encontrada: false });
+            return;
+        }
+
+        const ultima = await client.query(
+            `SELECT he.id_encuesta, he.datos_recolectados, he.fecha_encuesta,
+                    he.fecha_sincronizacion, u.nombre_completo AS encuestador
+             FROM historial_encuestas he
+             LEFT JOIN usuarios u ON u.id_usuario = he.id_encuestador
+             WHERE he.numero_documento = $1
+             ORDER BY he.fecha_sincronizacion DESC NULLS LAST, he.fecha_encuesta DESC
+             LIMIT 1`,
+            [documento]
+        );
+
+        res.status(200).json({
+            encontrada: true,
+            persona: persona.rows[0],
+            ultimaVersion: ultima.rows[0] ?? null,
+        });
+    } catch (error) {
+        console.error('Error buscando persona:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    } finally {
+        client.release();
+    }
+};

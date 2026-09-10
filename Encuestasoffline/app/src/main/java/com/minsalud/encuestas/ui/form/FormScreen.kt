@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalHospital
@@ -31,8 +32,10 @@ import com.google.gson.Gson
 import com.minsalud.encuestas.data.local.AppDatabase
 import com.minsalud.encuestas.data.local.entity.HistorialEntity
 import com.minsalud.encuestas.data.local.entity.PersonaEntity
+import com.minsalud.encuestas.data.network.RetrofitClient
 import com.minsalud.encuestas.data.repository.EncuestasRepositoryImpl
 import com.minsalud.encuestas.ui.components.SyncStatusBadge
+import com.minsalud.encuestas.util.TokenManager
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -69,6 +72,19 @@ fun FormScreen(
         capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
     }
 
+    /**
+     * Version que el servidor tenia cuando se abrio este formulario.
+     *
+     * Es la pieza que faltaba: al sincronizar se reenvia como
+     * version_anterior_id, de modo que si un companero sincronizo esa misma
+     * persona mientras se estaba en campo, el servidor detecta que la captura
+     * se hizo sobre datos ya viejos y aplica el Smart Merge. Antes solo se
+     * miraba la base local, que no sabe nada de lo capturado en otro celular.
+     */
+    var versionServidor by remember { mutableStateOf<String?>(null) }
+    var encuestadorPrevio by remember { mutableStateOf<String?>(null) }
+    var consultandoServidor by remember { mutableStateOf(false) }
+
     var savedIdEncuesta by remember { mutableStateOf("") }
     var showSuccessModal by remember { mutableStateOf(false) }
     var attemptedSubmit by remember { mutableStateOf(false) }
@@ -94,6 +110,42 @@ fun FormScreen(
                 observaciones = (map["observaciones"] as? String) ?: ""
             }
             cargoDatos = true
+
+            // Con red, se pregunta al servidor por esta persona. Es una consulta
+            // de cortesia: si falla o no hay senal, el formulario sigue
+            // funcionando exactamente igual que antes, que es la premisa de la
+            // app. Por eso el catch no muestra ningun error.
+            if (isOnline) {
+                consultandoServidor = true
+                try {
+                    val api = RetrofitClient.getApiService(TokenManager(context))
+                    val respuesta = api.buscarPersona(documento)
+                    val cuerpo = respuesta.body()
+
+                    if (respuesta.isSuccessful && cuerpo?.encontrada == true) {
+                        versionServidor = cuerpo.ultimaVersion?.id_encuesta
+                        encuestadorPrevio = cuerpo.ultimaVersion?.encuestador
+
+                        // Solo se rellena lo que este vacio: lo que ya haya en
+                        // el telefono es de este encuestador y no se pisa.
+                        cuerpo.persona?.let { remota ->
+                            if (nombres.isBlank()) nombres = remota.nombres.orEmpty()
+                            if (apellidos.isBlank()) apellidos = remota.apellidos.orEmpty()
+                        }
+                        cuerpo.ultimaVersion?.datos_recolectados?.let { datos ->
+                            if (vacunas.isBlank()) vacunas = (datos["vacunas"] as? String).orEmpty()
+                            if (enfermedad.isBlank()) enfermedad = (datos["enfermedad"] as? String).orEmpty()
+                            if (observaciones.isBlank()) {
+                                observaciones = (datos["observaciones"] as? String).orEmpty()
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    consultandoServidor = false
+                }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -212,6 +264,44 @@ fun FormScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
+                        }
+                    }
+                }
+
+                // Aviso de que esta persona ya venía registrada en el servidor.
+                // Sin esto los campos aparecerían llenos sin explicación y el
+                // encuestador no sabría que está actualizando el trabajo de otro.
+                AnimatedVisibility(visible = encuestadorPrevio != null) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.CloudDone,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            Column {
+                                Text(
+                                    text = "Ya encuestada por ${encuestadorPrevio.orEmpty()}",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                                Text(
+                                    text = "Se cargaron los últimos datos del servidor. " +
+                                        "Corrige lo que haya cambiado; lo que no toques se conserva.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
                         }
                     }
                 }
@@ -358,7 +448,10 @@ fun FormScreen(
                                 savedIdEncuesta = idEncuesta
 
                                 val latest = repo.getLatestHistorial(documento)
-                                val versionAnteriorId = latest?.idHistorial
+                                // Manda la del servidor cuando se pudo consultar: es la
+                                // unica que el servidor puede comparar con su ultima
+                                // version. La local solo sabe de este telefono.
+                                val versionAnteriorId = versionServidor ?: latest?.idHistorial
                                 val fechaEncuesta = System.currentTimeMillis()
 
                                 val persona = PersonaEntity(
