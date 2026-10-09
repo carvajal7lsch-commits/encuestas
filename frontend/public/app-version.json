@@ -1,13 +1,14 @@
 {
-  "versionCode": 3,
-  "versionName": "1.2.0",
-  "apkUrl": "https://github.com/carvajal7lsch-commits/encuestas/releases/download/v1.2.0/EncuestasOffline.apk",
-  "tamanoMb": 26.0,
+  "versionCode": 4,
+  "versionName": "1.3.0",
+  "apkUrl": "https://github.com/carvajal7lsch-commits/encuestas/releases/download/v1.3.0/EncuestasOffline.apk",
+  "tamanoMb": 26.2,
   "obligatoria": false,
-  "publicadaEn": "2026-09-10",
+  "publicadaEn": "2026-10-09",
   "notas": [
-    "Los registros ya no se quedan marcados como \"Local\" cuando sí subieron al servidor.",
-    "La app ahora te avisa sola cuando hay una versión nueva.",
-    "Sincronización más estable con redes intermitentes."
+    "La sesión se renueva automáticamente durante 30 días para enviar encuestas sin volver a entrar cada ocho horas.",
+    "La app explica si tus encuestas esperan internet, se están enviando o necesitan iniciar sesión.",
+    "Las encuestas guardadas se conservan aunque la sesión venza o falle el envío.",
+    "El estado recibido solo aparece después de la confirmación del servidor."
   ]
 }
