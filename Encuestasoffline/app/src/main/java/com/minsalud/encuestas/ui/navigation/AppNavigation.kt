@@ -2,6 +2,9 @@ package com.minsalud.encuestas.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import com.minsalud.encuestas.data.network.RetrofitClient
+import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -15,6 +18,7 @@ import com.minsalud.encuestas.util.TokenManager
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val tokenManager = remember(context) { TokenManager(context) }
     val hasToken = remember(tokenManager) { !tokenManager.getToken().isNullOrEmpty() }
     val startDestination = if (hasToken) "main" else "login"
@@ -35,10 +39,15 @@ fun AppNavigation() {
                     navController.navigate("form/$documento")
                 },
                 onLogout = {
+                    val refresh = tokenManager.getRefreshToken()
                     tokenManager.clearToken()
+                    if (refresh != null) scope.launch { RetrofitClient.revokeSession(refresh) }
                     navController.navigate("login") {
                         popUpTo("main") { inclusive = true }
                     }
+                },
+                onLogin = {
+                    navController.navigate("login") { launchSingleTop = true }
                 }
             )
         }
@@ -58,4 +67,3 @@ fun AppNavigation() {
         }
     }
 }
-

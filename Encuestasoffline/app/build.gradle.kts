@@ -32,8 +32,8 @@ android {
         targetSdk = 36
         // SÃºbelos en cada publicaciÃ³n: el instalador de Android y el chequeo de
         // actualizaciÃ³n de la app comparan contra versionCode.
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -95,6 +95,7 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
 
     testImplementation(libs.junit)
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
 
@@ -103,6 +104,7 @@ dependencies {
     // Retrofit (Red)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.gson)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     
     // Room (Local SQLite)
     val roomVersion = "2.6.1"

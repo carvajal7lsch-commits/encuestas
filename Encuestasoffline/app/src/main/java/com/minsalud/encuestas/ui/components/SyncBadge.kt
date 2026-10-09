@@ -1,143 +1,68 @@
 package com.minsalud.encuestas.ui.components
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.minsalud.encuestas.data.local.AppDatabase
-import com.minsalud.encuestas.data.repository.EncuestasRepositoryImpl
+import com.minsalud.encuestas.data.repository.SyncStatus
+import com.minsalud.encuestas.data.repository.SyncStatusRepository
 import com.minsalud.encuestas.worker.SyncScheduler
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun SyncStatusBadge(
-    modifier: Modifier = Modifier
-) {
+fun SyncStatusBadge(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var isOnline by remember { mutableStateOf(checkIsOnline(context)) }
-    var pendingCount by remember { mutableIntStateOf(0) }
-
-    // Registrar listener dinámico de red para cambiar en tiempo real entre En Línea y Offline
-    DisposableEffect(context) {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-        val networkCallback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                isOnline = true
-            }
-            override fun onLost(network: Network) {
-                isOnline = false
-            }
-        }
-        val request = NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .build()
-
-        connectivityManager?.registerNetworkCallback(request, networkCallback)
-
-        onDispose {
-            try {
-                connectivityManager?.unregisterNetworkCallback(networkCallback)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        try {
-            val db = AppDatabase.getDatabase(context)
-            val repo = EncuestasRepositoryImpl(db)
-            repo.getPendingSyncCountFlow().collectLatest { count ->
-                pendingCount = count
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    val backgroundColor = when {
-        pendingCount > 0 -> Color(0xFFFEF3C7) // Warning amber
-        isOnline -> Color(0xFFDCFCE7) // Success green
-        else -> Color(0xFFF3F4F6) // Neutral grey
-    }
-
-    val contentColor = when {
-        pendingCount > 0 -> Color(0xFFB45309)
-        isOnline -> Color(0xFF15803D)
-        else -> Color(0xFF4B5563)
-    }
-
-    Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .clickable {
-                try {
-                    SyncScheduler.sincronizarAhora(context)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            },
-        color = backgroundColor,
-        shape = RoundedCornerShape(20.dp),
-        tonalElevation = 2.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            // Indicador LED de estado
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(if (isOnline) Color(0xFF22C55E) else Color(0xFFEF4444))
+    val repo = remember(context) { SyncStatusRepository(context) }
+    val status by repo.status.collectAsState(initial = SyncStatus())
+    AssistChip(
+        modifier = modifier,
+        onClick = { if (!status.loginRequired) SyncScheduler.sincronizarAhora(context) },
+        label = { Text(status.label, style = MaterialTheme.typography.labelSmall) },
+        leadingIcon = {
+            if (status.sending && status.pending > 0 && !status.loginRequired) {
+                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+            } else Icon(
+                if (status.loginRequired || status.errors > 0) Icons.Default.Warning
+                else if (status.pending > 0) Icons.Default.CloudOff else Icons.Default.CloudDone,
+                contentDescription = null, modifier = Modifier.size(16.dp)
             )
-
-            Icon(
-                imageVector = when {
-                    pendingCount > 0 -> Icons.Default.Sync
-                    isOnline -> Icons.Default.CloudDone
-                    else -> Icons.Default.CloudOff
-                },
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(16.dp)
-            )
-
-            Text(
-                text = if (pendingCount > 0) "$pendingCount por subir" else if (isOnline) "En línea" else "Offline",
-                color = contentColor,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
+        },
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            labelColor = if (status.errors > 0 || status.loginRequired) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurface
+        )
+    )
 }
 
-private fun checkIsOnline(context: Context): Boolean {
-    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-    val network = connectivityManager?.activeNetwork ?: return false
-    val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-    return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+@Composable
+fun SyncStatusNotice(onLogin: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val repo = remember(context) { SyncStatusRepository(context) }
+    val status by repo.status.collectAsState(initial = SyncStatus())
+    if (status.loginRequired || status.pending + status.errors > 0) {
+        Surface(modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.secondaryContainer) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(if (status.loginRequired) "Necesitas iniciar sesión para enviar" else status.label,
+                    style = MaterialTheme.typography.titleSmall)
+                Text(when {
+                    status.loginRequired -> "Tus encuestas siguen guardadas en este teléfono. Puedes continuar capturando y enviarlas al volver a iniciar sesión."
+                    status.errors > 0 -> "Algunas encuestas no fueron aceptadas. Se conservan en el teléfono y necesitan revisión."
+                    !status.online -> "Tus encuestas están guardadas. Intentaremos enviarlas cuando vuelva internet."
+                    status.sending -> "Espera la confirmación del servidor. Puedes seguir usando la app."
+                    else -> "Tus encuestas están guardadas; reintentaremos el envío automáticamente."
+                }, style = MaterialTheme.typography.bodySmall)
+                if (status.loginRequired) {
+                    TextButton(onClick = onLogin) { Text("Iniciar sesión") }
+                } else if (status.pending > 0 && status.online && !status.sending) {
+                    TextButton(onClick = { SyncScheduler.sincronizarAhora(context) }) { Text("Reintentar envío") }
+                }
+            }
+        }
+    }
 }

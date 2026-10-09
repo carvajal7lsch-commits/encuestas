@@ -1,6 +1,7 @@
 package com.minsalud.encuestas.ui.main
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.minsalud.encuestas.ui.components.SyncStatusBadge
+import com.minsalud.encuestas.ui.components.SyncStatusNotice
 import com.minsalud.encuestas.ui.dashboard.DashboardScreen
 import com.minsalud.encuestas.ui.profile.ProfileScreen
 import com.minsalud.encuestas.ui.search.SearchScreen
@@ -25,7 +27,8 @@ import com.minsalud.encuestas.ui.search.SearchScreen
 @Composable
 fun MainScreen(
     onPersonFound: (String) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onLogin: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -124,20 +127,16 @@ fun MainScreen(
             }
         }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier.padding(padding)
         ) {
-            when (selectedTab) {
-                0 -> DashboardScreen(
-                    onNavigateToSearch = { selectedTab = 1 }
-                )
-                1 -> SearchScreen(
-                    onPersonFound = onPersonFound,
-                    onLogout = onLogout
-                )
-                2 -> ProfileScreen(
-                    onLogout = onLogout
-                )
+            SyncStatusNotice(onLogin)
+            Box(Modifier.weight(1f)) {
+                when (selectedTab) {
+                    0 -> DashboardScreen(onNavigateToSearch = { selectedTab = 1 })
+                    1 -> SearchScreen(onPersonFound = onPersonFound, onLogout = onLogout)
+                    2 -> ProfileScreen(onLogout = onLogout)
+                }
             }
         }
     }

@@ -39,7 +39,6 @@ fun ProfileScreen(
                 Button(
                     onClick = {
                         showLogoutDialog = false
-                        tokenManager.clearToken()
                         onLogout()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)

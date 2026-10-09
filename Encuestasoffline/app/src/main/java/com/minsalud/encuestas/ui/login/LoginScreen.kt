@@ -231,7 +231,8 @@ fun LoginScreen(
 
                                     val response = api.login(request)
                                     if (response.isSuccessful && response.body() != null) {
-                                        tokenManager.saveToken(response.body()!!.token)
+                                        val sesion = response.body()!!
+                                        tokenManager.saveSession(sesion.token, sesion.refreshToken)
                                         // Ya hay token: lo que quedó en la cola de una
                                         // jornada sin sesión puede subir de inmediato.
                                         SyncScheduler.sincronizarAhora(context)

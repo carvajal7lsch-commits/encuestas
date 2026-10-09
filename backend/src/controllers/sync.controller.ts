@@ -7,7 +7,17 @@ const smartMergeService = new SmartMergeService();
 export const syncEncuesta = async (req: Request, res: Response): Promise<void> => {
     const client = await pool.connect();
     try {
-        const { id_encuesta, numero_documento, datos_recolectados } = req.body;
+        const { id_encuesta, numero_documento } = req.body;
+        // APK 1.2 manda JSON como texto; las nuevas pueden enviar un objeto.
+        // Normalizar antes del merge evita fusionar índices de una cadena.
+        let datos_recolectados: unknown;
+        try {
+            datos_recolectados = typeof req.body.datos_recolectados === 'string'
+                ? JSON.parse(req.body.datos_recolectados) : req.body.datos_recolectados;
+        } catch { res.status(400).json({ error: 'Datos de encuesta inválidos' }); return; }
+        if (!datos_recolectados || typeof datos_recolectados !== 'object' || Array.isArray(datos_recolectados)) {
+            res.status(400).json({ error: 'Los datos de encuesta deben ser un objeto' }); return;
+        }
         const version_anterior_id = req.body.version_anterior_id || null;
         const fecha_encuesta = req.body.fecha_encuesta || null;
 

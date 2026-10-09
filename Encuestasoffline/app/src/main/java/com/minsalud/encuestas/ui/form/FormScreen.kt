@@ -88,6 +88,8 @@ fun FormScreen(
     var savedIdEncuesta by remember { mutableStateOf("") }
     var showSuccessModal by remember { mutableStateOf(false) }
     var attemptedSubmit by remember { mutableStateOf(false) }
+    var guardando by remember { mutableStateOf(false) }
+    var errorGuardado by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(documento) {
         try {
@@ -168,7 +170,7 @@ fun FormScreen(
             },
             title = {
                 Text(
-                    text = if (isOnline) "¡Encuesta Guardada y Sincronizando!" else "¡Encuesta Guardada en Dispositivo!",
+                    text = "Encuesta guardada en este teléfono",
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -176,10 +178,7 @@ fun FormScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        if (isOnline)
-                            "Los datos se guardaron localmente de forma segura y se están subiendo al servidor en este momento."
-                        else
-                            "Los datos se han guardado localmente de forma segura en la base de datos cifrada (Offline)."
+                        "Puedes continuar capturando. La app intentará enviarla cuando haya internet y tu sesión esté activa; verás la confirmación al recibirla el servidor."
                     )
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     Text("• Ciudadano: $nombres $apellidos", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
@@ -191,7 +190,7 @@ fun FormScreen(
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                     ) {
                         Text(
-                            text = if (isOnline) "✓ Subiendo al servidor en segundo plano..." else "☁ Guardado localmente (se sincronizará al tener red)",
+                            text = "Guardada · pendiente de envío",
                             style = MaterialTheme.typography.labelSmall,
                             color = if (isOnline) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(8.dp)
@@ -434,10 +433,16 @@ fun FormScreen(
                 }
 
                 // Botón Guardar
+                errorGuardado?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                }
                 Button(
                     onClick = {
                         attemptedSubmit = true
                         if (nombres.isBlank() || apellidos.isBlank()) return@Button
+                        if (guardando) return@Button
+                        guardando = true
+                        errorGuardado = null
 
                         scope.launch {
                             try {
@@ -504,9 +509,13 @@ fun FormScreen(
                                 showSuccessModal = true
                             } catch (e: Exception) {
                                 e.printStackTrace()
+                                errorGuardado = "No se pudo guardar la encuesta. Intenta nuevamente antes de salir."
+                            } finally {
+                                guardando = false
                             }
                         }
                     },
+                    enabled = !guardando,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
@@ -514,7 +523,7 @@ fun FormScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                    Text("Guardar Encuesta (Offline)", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                    Text(if (guardando) "Guardando…" else "Guardar encuesta", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
                 }
 
                 Spacer(modifier = Modifier.height(30.dp))

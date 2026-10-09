@@ -23,13 +23,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.work.Constraints
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import com.minsalud.encuestas.data.local.AppDatabase
 import com.minsalud.encuestas.data.repository.EncuestasRepositoryImpl
-import com.minsalud.encuestas.worker.SyncWorker
+import com.minsalud.encuestas.data.repository.SyncStatusRepository
+import com.minsalud.encuestas.worker.SyncScheduler
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -39,7 +36,6 @@ fun DashboardScreen(
     val context = LocalContext.current
     var totalPersonas by remember { mutableIntStateOf(0) }
     var pendingSyncCount by remember { mutableIntStateOf(0) }
-    var isSyncing by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
@@ -55,10 +51,8 @@ fun DashboardScreen(
 
     LaunchedEffect(Unit) {
         try {
-            val db = AppDatabase.getDatabase(context)
-            val repo = EncuestasRepositoryImpl(db)
-            repo.getPendingSyncCountFlow().collectLatest { count ->
-                pendingSyncCount = count
+            SyncStatusRepository(context).status.collectLatest { status ->
+                pendingSyncCount = status.pending + status.errors
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -131,7 +125,7 @@ fun DashboardScreen(
                     modifier = Modifier.weight(1f),
                     title = "Cola de Subida",
                     value = "$pendingSyncCount",
-                    subtitle = if (pendingSyncCount > 0) "Pendientes de Sync" else "Todo al día",
+                    subtitle = if (pendingSyncCount > 0) "Por enviar o revisar" else "Sin envíos pendientes",
                     icon = if (pendingSyncCount > 0) Icons.Default.Sync else Icons.Default.CloudDone,
                     containerColor = if (pendingSyncCount > 0) Color(0xFFFEF3C7) else Color(0xFFDCFCE7),
                     iconTint = if (pendingSyncCount > 0) Color(0xFFB45309) else Color(0xFF15803D)
@@ -195,15 +189,8 @@ fun DashboardScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        isSyncing = true
                         try {
-                            val constraints = Constraints.Builder()
-                                .setRequiredNetworkType(NetworkType.CONNECTED)
-                                .build()
-                            val syncWork = OneTimeWorkRequestBuilder<SyncWorker>()
-                                .setConstraints(constraints)
-                                .build()
-                            WorkManager.getInstance(context).enqueue(syncWork)
+                            SyncScheduler.sincronizarAhora(context)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
@@ -231,12 +218,12 @@ fun DashboardScreen(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Forzar Sincronización Manual",
+                            text = "Enviar encuestas pendientes",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Subir cola local al servidor PostgreSQL",
+                            text = "Se enviarán cuando haya internet y tu sesión esté activa",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

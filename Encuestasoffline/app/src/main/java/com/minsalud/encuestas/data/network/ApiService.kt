@@ -37,8 +37,8 @@ interface ApiService {
 }
 
 // DTOs
-data class LoginRequest(val identificador: String, val password: String)
-data class LoginResponse(val token: String)
+data class LoginRequest(val identificador: String, val password: String, val sesion_persistente: Boolean = true)
+data class LoginResponse(val token: String, val refreshToken: String? = null, val refreshExpiresAt: String? = null)
 
 data class SyncPayload(
     val id_encuesta: String, // UUID

@@ -20,6 +20,9 @@ interface ColaSyncDao {
     @Query("SELECT * FROM cola_sincronizacion")
     suspend fun getAllTasks(): List<ColaSyncEntity>
 
+    @Query("SELECT * FROM cola_sincronizacion ORDER BY id DESC")
+    fun observeTasks(): Flow<List<ColaSyncEntity>>
+
     @Query("SELECT COUNT(*) FROM cola_sincronizacion WHERE estado = 'pending'")
     fun getPendingCountFlow(): Flow<Int>
 

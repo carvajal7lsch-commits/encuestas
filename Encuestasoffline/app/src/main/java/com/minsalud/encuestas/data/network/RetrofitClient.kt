@@ -6,8 +6,18 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import com.google.gson.Gson
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.IOException
 
 object RetrofitClient {
+    // Cliente independiente, sin interceptor: evita renovación recursiva.
+    val sessionClient: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(20, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS).build()
     /**
      * Detección dinámica de URL del backend:
      * - En Emulador Android: usa http://10.0.2.2:3000/api/
@@ -29,6 +39,13 @@ object RetrofitClient {
         } else {
             "https://encuestas.secarvajal.com/api/"
         }
+
+    suspend fun revokeSession(refresh: String) = withContext(Dispatchers.IO) {
+        val body = Gson().toJson(mapOf("refreshToken" to refresh)).toRequestBody("application/json".toMediaType())
+        val request = okhttp3.Request.Builder().url(BASE_URL + "auth/logout").post(body).build()
+        try { sessionClient.newCall(request).execute().use { } }
+        catch (_: IOException) { /* Sin red, las credenciales ya se borraron localmente. */ }
+    }
 
     fun getApiService(tokenManager: TokenManager): ApiService {
         val client = OkHttpClient.Builder()

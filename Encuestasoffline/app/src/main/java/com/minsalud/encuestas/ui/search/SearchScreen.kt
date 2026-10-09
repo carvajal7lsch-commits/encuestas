@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.minsalud.encuestas.data.local.AppDatabase
 import com.minsalud.encuestas.data.local.entity.PersonaEntity
 import com.minsalud.encuestas.data.repository.EncuestasRepositoryImpl
+import com.minsalud.encuestas.data.repository.SyncStatus
+import com.minsalud.encuestas.data.repository.SyncStatusRepository
 import com.minsalud.encuestas.ui.components.SyncStatusBadge
 import kotlinx.coroutines.flow.collectLatest
 
@@ -40,6 +42,8 @@ fun SearchScreen(
     var recentPersonas by remember { mutableStateOf<List<PersonaEntity>>(emptyList()) }
 
     val context = LocalContext.current
+    val syncRepository = remember(context) { SyncStatusRepository(context) }
+    val syncStatus by syncRepository.status.collectAsState(initial = SyncStatus())
 
     LaunchedEffect(Unit) {
         try {
@@ -233,7 +237,7 @@ fun SearchScreen(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = if (persona.syncStatus == "synced") "Sincronizado" else "Local",
+                                    text = syncStatus.personLabel(persona.numeroDocumento, persona.syncStatus == "synced"),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (persona.syncStatus == "synced") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)

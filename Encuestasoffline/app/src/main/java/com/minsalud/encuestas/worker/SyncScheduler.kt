@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit
  */
 object SyncScheduler {
 
-    private const val TRABAJO_PERIODICO = "sync_periodico_encuestas"
-    private const val TRABAJO_INMEDIATO = "sync_inmediato_encuestas"
+    const val TRABAJO_PERIODICO = "sync_periodico_encuestas"
+    const val TRABAJO_INMEDIATO = "sync_inmediato_encuestas"
 
     private val soloConRed = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -54,7 +54,7 @@ object SyncScheduler {
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             TRABAJO_INMEDIATO,
-            ExistingWorkPolicy.REPLACE,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
             request
         )
     }

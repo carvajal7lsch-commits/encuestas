@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import syncRoutes from './routes/sync.routes';
 import { authMiddleware } from './middlewares/authMiddleware';
+import { migrateSessions } from './config/sessionMigration';
 
 dotenv.config();
 
@@ -66,8 +67,14 @@ app.get('/api/protected', authMiddleware, (req: Request, res: Response) => {
 });
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(Number(port), '0.0.0.0', () => {
-    console.log(`[server]: Server is running at http://0.0.0.0:${port}`);
+  migrateSessions().then(() => {
+    console.log('[database]: Migración de sesiones verificada');
+    app.listen(Number(port), '0.0.0.0', () => {
+      console.log(`[server]: Server is running at http://0.0.0.0:${port}`);
+    });
+  }).catch((error: NodeJS.ErrnoException) => {
+    console.error('[database]: No se pudo preparar el esquema de sesiones:', error.code ?? error.message);
+    process.exit(1);
   });
 }
 

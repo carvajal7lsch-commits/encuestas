@@ -13,13 +13,19 @@ import com.minsalud.encuestas.data.network.SyncPayload
 import com.minsalud.encuestas.util.TokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import androidx.room.withTransaction
 
 class SyncWorker(
     appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    override suspend fun doWork(): Result = executionLock.withLock { sync() }
+
+    private suspend fun sync(): Result = withContext(Dispatchers.IO) {
         val database = AppDatabase.getDatabase(applicationContext)
         val colaDao = database.colaSyncDao()
         val historialDao = database.historialDao()
@@ -30,6 +36,7 @@ class SyncWorker(
         val token = tokenManager.getToken()
 
         if (token.isNullOrEmpty()) {
+            tokenManager.requireLogin()
             Log.e(TAG, "No hay token de sesión. Cancelando sincronización.")
             return@withContext Result.failure()
         }
@@ -71,6 +78,11 @@ class SyncWorker(
             val nombres = payloadMap["nombres"] as? String
             val apellidos = payloadMap["apellidos"] as? String
 
+            if (idEncuesta.isBlank() || documento.isBlank()) {
+                colaDao.updateSyncTask(task.copy(estado = "error", ultimoError = "Encuesta sin identificador: requiere revisión"))
+                continue
+            }
+
             val syncPayload = SyncPayload(
                 id_encuesta = idEncuesta,
                 numero_documento = documento,
@@ -93,15 +105,18 @@ class SyncWorker(
                         val estado = if (codigo == 409) "conflict_resolved" else "sent"
                         val error = if (codigo == 409) "409 Conflict - Smart Merge aplicado" else null
 
-                        colaDao.updateSyncTask(task.copy(estado = estado, ultimoError = error))
-                        if (idEncuesta.isNotEmpty()) {
-                            historialDao.marcarSincronizado(idEncuesta, System.currentTimeMillis())
+                        database.withTransaction {
+                            colaDao.updateSyncTask(task.copy(estado = estado, ultimoError = error))
+                            if (idEncuesta.isNotEmpty()) {
+                                historialDao.marcarSincronizado(idEncuesta, System.currentTimeMillis())
+                            }
                         }
                     }
 
                     // Token vencido: la tarea se queda pendiente para que suba sola
                     // en cuanto el encuestador vuelva a iniciar sesión.
-                    codigo == 401 -> {
+                    codigo == 401 || codigo == 403 -> {
+                        tokenManager.requireLogin()
                         allSuccessful = false
                         Log.w(TAG, "Sesión expirada al sincronizar la encuesta $idEncuesta.")
                         colaDao.updateSyncTask(
@@ -110,6 +125,15 @@ class SyncWorker(
                                 ultimoError = "401: sesión expirada, vuelva a iniciar sesión"
                             )
                         )
+                        // El interceptor ya intentó renovar. No repetir el mismo
+                        // rechazo por cada encuesta ni consumir batería sin límite.
+                        reconciliarPersonas(colaDao, personaDao, gson)
+                        return@withContext Result.success()
+                    }
+
+                    codigo in 400..499 && codigo != 408 && codigo != 429 -> {
+                        colaDao.updateSyncTask(task.copy(estado = "error", intentos = task.intentos + 1,
+                            ultimoError = "HTTP $codigo: el servidor no aceptó la encuesta. Requiere revisión."))
                     }
 
                     else -> {
@@ -122,6 +146,8 @@ class SyncWorker(
                         )
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 allSuccessful = false
                 Log.e(TAG, "Error de red: ${e.message}")
@@ -171,9 +197,13 @@ class SyncWorker(
         for (documento in confirmados - enVuelo) {
             personaDao.actualizarSyncStatus(documento, "synced")
         }
+        for (documento in enVuelo) {
+            personaDao.actualizarSyncStatus(documento, "pending")
+        }
     }
 
     companion object {
+        private val executionLock = Mutex()
         private const val TAG = "SyncWorker"
     }
 }

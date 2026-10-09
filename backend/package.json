@@ -8,7 +8,9 @@
     "dev": "ts-node-dev --respawn src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "seed": "ts-node src/scripts/seed.ts"
+    "seed": "ts-node src/scripts/seed.ts",
+    "migrate:sessions": "ts-node src/scripts/migrateSessions.ts",
+    "verify:sessions": "ts-node src/scripts/verifySessions.ts"
   },
   "keywords": [],
   "author": "",
